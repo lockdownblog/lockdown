@@ -1,12 +1,31 @@
-﻿using System;
+﻿using System.Collections.Generic;
+using System.Reflection;
+using Lockdown.Commands;
+using McMaster.Extensions.CommandLineUtils;
 
 namespace Lockdown
 {
-    class Program
+    [Command("lockdown")]
+    [VersionOptionFromMember("--version", MemberName = nameof(GetVersion))]
+    [Subcommand(
+        typeof(BuildCommand)
+    )]
+    class LockdownCommand : CommandBase
     {
-        static void Main(string[] args)
+        public static void Main(string[] args) => CommandLineApplication.Execute<LockdownCommand>(args);
+
+        protected override int OnExecute(CommandLineApplication app)
         {
-            Console.WriteLine("Hello World!");
+            app.ShowHelp();
+            return 1;
+        }
+
+        private static string GetVersion()
+            => typeof(LockdownCommand).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
+
+        public override List<string> CreateArgs()
+        {
+            return new List<string>();
         }
     }
 }

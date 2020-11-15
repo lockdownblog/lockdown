@@ -16,7 +16,7 @@ namespace Lockdown.Commands
         [LegalFilePath]
         public string Output { get; set; }
 
-        private LockdownCommand Parent { get; set; }
+        private Lockdown Parent { get; set; }
 
         public override List<string> CreateArgs()
         {

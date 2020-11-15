@@ -7,8 +7,11 @@
 
   <ItemGroup>
     <PackageReference Include="McMaster.Extensions.CommandLineUtils" Version="3.0.0" />
+    <PackageReference Include="DotLiquid" Version="2.0.366" />
+    <PackageReference Include="Markdig" Version="0.22.0" />
+    <PackageReference Include="YamlDotNet" Version="8.1.2" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Commands\" />
+    <Folder Include="Build\" />
   </ItemGroup>
 </Project>

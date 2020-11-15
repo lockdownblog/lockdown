@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using DotLiquid;
 using YamlDotNet.Serialization;
 
 namespace Lockdown.Build
@@ -11,6 +12,8 @@ namespace Lockdown.Build
         public string Tags { get; set; }
         [YamlMember(Alias = "layout")]
         public string Layout { get; set; }
+        [YamlMember(Alias = "datetime")]
+        public DateTime DateTime { get; set; }
 
         [YamlMember(Alias = "title")]
         public string Title { get; set; }

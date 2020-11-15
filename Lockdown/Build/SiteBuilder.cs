@@ -1,6 +1,9 @@
-﻿using System.IO;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using DotLiquid;
+using Lockdown.LiquidEntities;
 using Markdig;
 using Markdig.Renderers;
 
@@ -9,6 +12,8 @@ namespace Lockdown.Build
 
     public class SiteBuilder
     {
+        const string PostsPath = "posts";
+
         public string RootPath
         {
             get;
@@ -33,14 +38,16 @@ namespace Lockdown.Build
             private set;
         }
 
+        List<IndexPost> Posts;
+
         public SiteBuilder(string rootPath, string outPath)
         {
             RootPath = rootPath;
             OutputPath = outPath;
-            PostsInputPath = Path.Combine(RootPath, "content", "posts");
-            PostsOutputPath = Path.Combine(OutputPath, "posts");
+            PostsInputPath = Path.Combine(RootPath, "content", PostsPath);
+            PostsOutputPath = Path.Combine(OutputPath, PostsPath);
+            Posts = new List<IndexPost>();
             Template.FileSystem = new LockdownFileSystem(Path.Combine(rootPath, "templates"));
-
         }
 
         public void CleanOutput()
@@ -53,7 +60,30 @@ namespace Lockdown.Build
             Directory.CreateDirectory(PostsOutputPath);
         }
 
+        public IndexPost MapToIndexPost(PostFrontMatter post, string filename)
+        {
+            var indexPost = new IndexPost();
+            indexPost.Title = post.Title;
+            indexPost.Dt = post.DateTime;
+            indexPost.DateTime = post.DateTime.ToString();
+            indexPost.Url = PostsPath + "/" +  filename;
+            return indexPost;
+        }
 
+        public void WriteIndex()
+        {
+            using (var file = new System.IO.StreamWriter(Path.Combine(OutputPath, "index.html")))
+            {
+                var file_text = File.ReadAllText(Path.Combine(RootPath, "content", "index.html"));
+                var template = Template.Parse(file_text);
+
+                var orderedPosts = Posts.OrderBy(post => post.Dt).Reverse();
+
+                var rendered = template.Render(Hash.FromAnonymousObject(new { posts = orderedPosts }));
+                file.Write(rendered);
+            }
+
+        }
 
         public int Build()
         {
@@ -65,6 +95,7 @@ namespace Lockdown.Build
             {
                 var file_text = File.ReadAllText(file_path);
                 var file_name = Path.GetFileNameWithoutExtension(file_path);
+                var outFileName = $"{file_name}.html";
                 var document = Markdown.Parse(file_text, MarkdownExtensions.Pipeline);
                 var frontMatter = document.GetFrontMatter<PostFrontMatter>();
 
@@ -83,13 +114,19 @@ namespace Lockdown.Build
 
                 Template template = Template.Parse(writer.ToString());
 
+                Posts.Add(MapToIndexPost(frontMatter, outFileName));
+
                 var rendered = template.Render(Hash.FromAnonymousObject(new { title = frontMatter.Title }));
 
-                using (var file = new System.IO.StreamWriter(Path.Combine(PostsOutputPath, $"{file_name}.html")))
+                using (var file = new System.IO.StreamWriter(Path.Combine(PostsOutputPath, outFileName)))
                 {
                     file.Write(rendered);
                 }
             }
+
+
+            WriteIndex();
+
 
             return 1;
         }

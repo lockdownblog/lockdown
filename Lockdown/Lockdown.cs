@@ -15,9 +15,9 @@ namespace Lockdown
     [Subcommand(
         typeof(BuildCommand)
     )]
-    class LockdownCommand : CommandBase
+    class Lockdown : CommandBase
     {
-        public static void Main(string[] args) => CommandLineApplication.Execute<LockdownCommand>(args);
+        public static void Main(string[] args) => CommandLineApplication.Execute<Lockdown>(args);
 
         protected override int OnExecute(CommandLineApplication app)
         {
@@ -26,7 +26,7 @@ namespace Lockdown
         }
 
         private static string GetVersion()
-            => typeof(LockdownCommand).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
+            => typeof(Lockdown).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
 
         public override List<string> CreateArgs()
         {

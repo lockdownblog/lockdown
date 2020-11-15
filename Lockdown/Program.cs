@@ -1,5 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Reflection;
+using DotLiquid;
+using DotLiquid.FileSystems;
+using DotLiquid.NamingConventions;
+using Lockdown.Build;
 using Lockdown.Commands;
 using McMaster.Extensions.CommandLineUtils;
 

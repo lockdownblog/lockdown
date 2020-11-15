@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Lockdown.Build;
 using McMaster.Extensions.CommandLineUtils;
 
 namespace Lockdown.Commands
@@ -10,6 +11,10 @@ namespace Lockdown.Commands
         [Option("-p")]
         [LegalFilePath]
         public string Path { get; set; }
+
+        [Option("-o")]
+        [LegalFilePath]
+        public string Output { get; set; }
 
         private LockdownCommand Parent { get; set; }
 
@@ -25,6 +30,13 @@ namespace Lockdown.Commands
             }
 
             return args;
+        }
+
+        protected override int OnExecute(CommandLineApplication app)
+        {
+            var builder = new SiteBuilder(Path ?? "./", Output ?? "./_site");
+            builder.Build();
+            return 1;
         }
     }
 }

@@ -1,0 +1,26 @@
+name: CI on tags
+
+on: push
+
+jobs:
+
+  Publish:
+
+    runs-on: macos-latest
+    steps:
+
+    - uses: actions/checkout@v1
+
+    - uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '5.0.x' # SDK Version to use; x will use the latest version of the 3.1 channel
+
+    - name: macOS build
+      run: |
+        dotnet restore ./Lockdown/Lockdown.csproj
+        dotnet publish ./Lockdown/Lockdown.csproj -r osx-x64 -p:PublishSingleFile=true --self-contained false -o ./publish/osx-x64
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: osx-x64-lockdown
+        path: publish/osx-x64/Lockdown

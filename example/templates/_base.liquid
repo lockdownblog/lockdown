@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="{% block html_lang %}{{ DEFAULT_LANG }}{% endblock html_lang %}"  itemscope itemtype="http://schema.org/Blog">
+<head>
+        {% include 'headz' %}
+        {% block head %}{% endblock head %}
+</head>
+
+<body>   
+    <div class="page-content">
+        <div class="wrapper">
+            {% block content %}
+            {% endblock %}
+        </div>
+    </div>
+</body>
+</html>

@@ -1,4 +1,10 @@
 {% extends 'base' %}
 {% block content %}
 <h1>{{ Site.Title }}</h1>
+
+<ol>
+{% for post in posts %}
+<li>{{ post.title }} - {{ post.datetime }}</li>
+{% endfor%}
+</ol>
 {% endblock %}

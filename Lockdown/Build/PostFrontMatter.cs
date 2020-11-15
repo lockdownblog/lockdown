@@ -1,16 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using DotLiquid;
 using YamlDotNet.Serialization;
 
 namespace Lockdown.Build
 {
-    public class PostFrontMatter
+    public class PostFrontMatter : Drop
     {
         [YamlMember(Alias = "tags")]
         public string Tags { get; set; }
         [YamlMember(Alias = "layout")]
         public string Layout { get; set; }
+        [YamlMember(Alias = "datetime")]
+        public DateTime DateTime { get; set; }
 
         [YamlMember(Alias = "title")]
         public string Title { get; set; }
@@ -31,5 +34,10 @@ namespace Lockdown.Build
             .Split(",", StringSplitOptions.RemoveEmptyEntries)
             .Select(x => x.Trim())
             .ToArray();
+
+        public object ToLiquid()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

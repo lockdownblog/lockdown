@@ -1,7 +1,9 @@
 
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lockdown", "Lockdown.csproj", "{72339FE2-61C1-4EDF-A524-F1F369C7815B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lockdown", "Lockdown\Lockdown.csproj", "{72339FE2-61C1-4EDF-A524-F1F369C7815B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lockdown.Tests", "Lockdown.Tests\Lockdown.Tests.csproj", "{708ADCEC-54A3-48CD-8BB6-87687BF16A68}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -13,5 +15,9 @@ Global
 		{72339FE2-61C1-4EDF-A524-F1F369C7815B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{72339FE2-61C1-4EDF-A524-F1F369C7815B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{72339FE2-61C1-4EDF-A524-F1F369C7815B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{708ADCEC-54A3-48CD-8BB6-87687BF16A68}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{708ADCEC-54A3-48CD-8BB6-87687BF16A68}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{708ADCEC-54A3-48CD-8BB6-87687BF16A68}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{708ADCEC-54A3-48CD-8BB6-87687BF16A68}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

@@ -15,6 +15,9 @@ namespace Lockdown
     [Subcommand(
         typeof(BuildCommand)
     )]
+    [Subcommand(
+        typeof(RunCommand)
+    )]
     class Lockdown : CommandBase
     {
         public static void Main(string[] args) => CommandLineApplication.Execute<Lockdown>(args);

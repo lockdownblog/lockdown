@@ -13,6 +13,7 @@ namespace Lockdown.Build
     public class SiteBuilder
     {
         const string PostsPath = "posts";
+        const string StaticPath = "static";
 
         public string RootPath
         {
@@ -32,6 +33,12 @@ namespace Lockdown.Build
             private set;
         }
 
+        public string StaticInputPath
+        {
+            get;
+            private set;
+        }
+
         public string PostsOutputPath
         {
             get;
@@ -45,6 +52,7 @@ namespace Lockdown.Build
             RootPath = rootPath;
             OutputPath = outPath;
             PostsInputPath = Path.Combine(RootPath, "content", PostsPath);
+            StaticInputPath = Path.Combine(RootPath, StaticPath);
             PostsOutputPath = Path.Combine(OutputPath, PostsPath);
             Posts = new List<IndexPost>();
             Template.FileSystem = new LockdownFileSystem(Path.Combine(rootPath, "templates"));
@@ -83,6 +91,19 @@ namespace Lockdown.Build
                 file.Write(rendered);
             }
 
+        }
+
+        public void MoveStaticFiles()
+        {
+            //Now Create all of the directories
+            foreach (string dirPath in Directory.GetDirectories(StaticInputPath, "*", 
+                SearchOption.AllDirectories))
+                Directory.CreateDirectory(dirPath.Replace(StaticInputPath, OutputPath));
+
+            //Copy all the files & Replaces any files with the same name
+            foreach (string newPath in Directory.GetFiles(StaticInputPath, "*.*", 
+                SearchOption.AllDirectories))
+                File.Copy(newPath, newPath.Replace(StaticInputPath, OutputPath), true);
         }
 
         public int Build()
@@ -124,7 +145,7 @@ namespace Lockdown.Build
                 }
             }
 
-
+            MoveStaticFiles();
             WriteIndex();
 
 

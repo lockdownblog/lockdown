@@ -8,10 +8,6 @@ namespace Lockdown.Commands
     class BuildCommand : CommandBase
     {
 
-        [Option("-p")]
-        [LegalFilePath]
-        public string Path { get; set; }
-
         [Option("-o")]
         [LegalFilePath]
         public string Output { get; set; }
@@ -34,7 +30,7 @@ namespace Lockdown.Commands
 
         protected override int OnExecute(CommandLineApplication app)
         {
-            var builder = new SiteBuilder(Path ?? "./", Output ?? "./_site");
+            var builder = new SiteBuilder(Path, Output ?? "./_site");
             builder.Build();
             return 1;
         }

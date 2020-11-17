@@ -15,6 +15,10 @@ jobs:
       with:
         dotnet-version: '5.0.x' # SDK Version to use; x will use the latest version of the 3.1 channel
 
+    - name: Test
+      run: |
+        dotnet test
+
     - name: macOS build
       run: |
         dotnet restore ./Lockdown/Lockdown.csproj

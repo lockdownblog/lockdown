@@ -1,0 +1,60 @@
+﻿namespace Lockdown.Tests
+{
+    using System;
+    using System.IO;
+    using System.Linq;
+    using System.Threading.Tasks;
+    using AngleSharp;
+    using AngleSharp.Dom;
+    using Lockdown.Build;
+    using Xunit;
+
+    /// <summary>
+    /// This test is massive and should be broken down into much smaller bits!
+    /// </summary>
+    public class SuperTest : IDisposable
+    {
+        readonly string RootDirectory;
+        readonly string ExitDirectory;
+
+        public SuperTest()
+        {
+            var workspace = Environment.GetEnvironmentVariable("GITHUB_WORKSPACE");
+            RootDirectory = Path.Combine(workspace, "example");
+            ExitDirectory = Path.Combine(RootDirectory, "_site");
+
+            if (Directory.Exists(ExitDirectory))
+            {
+                Directory.Delete(ExitDirectory, recursive: true);
+            }
+        }
+
+        private async Task<IDocument> OpenDocument(string path)
+        {
+            var context = BrowsingContext.New(Configuration.Default);
+            return await context.OpenAsync(req => req.Content(File.ReadAllText(path)));
+        }
+
+        public void Dispose()
+        {
+            Directory.Delete(ExitDirectory, recursive: true);
+        }
+
+        [Fact]
+        public async Task TestBuild()
+        {
+            Assert.False(File.Exists(Path.Combine(ExitDirectory, "index.html")));
+
+            var siteBuilder = new SiteBuilder(RootDirectory, ExitDirectory);
+
+            siteBuilder.Build();
+
+            var indexFile = Path.Combine(ExitDirectory, "index.html");
+            Assert.True(File.Exists(indexFile));
+            var document = await OpenDocument(indexFile);
+
+            var lis = document.All.Where(node => node.LocalName == "li");
+            Assert.True(lis.Count() == 2);
+        }
+    }
+}

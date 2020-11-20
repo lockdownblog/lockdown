@@ -20,8 +20,6 @@ namespace Lockdown.Build
             .UseAdvancedExtensions()
             .Build();
 
-
-
         public static T GetFrontMatter<T>(this MarkdownDocument document)
         {
             var block = document

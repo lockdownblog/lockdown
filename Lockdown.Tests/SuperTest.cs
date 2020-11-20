@@ -55,6 +55,14 @@
 
             var lis = document.All.Where(node => node.LocalName == "li");
             Assert.True(lis.Count() == 2);
+
+            var titleContainer = document.All.Where(
+                node => node.LocalName == "h1" && node.ClassName=="brand-title").First();
+            Assert.True(titleContainer.TextContent == "Lockdown");
+
+            var subTitleContainer = document.All.Where(
+                node => node.LocalName == "h2" && node.ClassName=="brand-tagline").First();
+            Assert.True(subTitleContainer.TextContent == "A static website generator");
         }
     }
 }

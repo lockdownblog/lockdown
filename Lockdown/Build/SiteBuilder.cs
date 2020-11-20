@@ -6,6 +6,8 @@ using DotLiquid;
 using Lockdown.LiquidEntities;
 using Markdig;
 using Markdig.Renderers;
+using YamlDotNet.Serialization;
+using LiquidSocial = Lockdown.LiquidEntities.Social;
 
 namespace Lockdown.Build
 {
@@ -44,6 +46,8 @@ namespace Lockdown.Build
             get;
             private set;
         }
+
+        private Site SiteConfig;
 
         List<IndexPost> Posts;
 
@@ -87,7 +91,12 @@ namespace Lockdown.Build
 
                 var orderedPosts = Posts.OrderBy(post => post.Dt).Reverse();
 
-                var rendered = template.Render(Hash.FromAnonymousObject(new { posts = orderedPosts }));
+                var renderVars = Hash.FromAnonymousObject(new { 
+                    site = SiteConfig,
+                    posts = orderedPosts
+                });
+
+                var rendered = template.Render(renderVars);
                 file.Write(rendered);
             }
 
@@ -106,9 +115,30 @@ namespace Lockdown.Build
                 File.Copy(newPath, newPath.Replace(StaticInputPath, OutputPath), true);
         }
 
+        private static readonly IDeserializer YamlDeserializer =
+            new DeserializerBuilder()
+            .IgnoreUnmatchedProperties()
+            .Build();
+
+        public Site GetConfig()
+        {
+            var siteConfig = File.ReadAllText(Path.Combine(RootPath, "site.yml"));
+            var config =  YamlDeserializer.Deserialize<SiteConfig>(siteConfig);
+
+            return new Site 
+            {
+                Subtitle = config.Subtitle,
+                Title = config.Title,
+                Social = config.Social.Select(
+                    social => new LiquidSocial { Link = social.Link, Name = social.Name }
+                ).ToList()
+            };
+        }
+
         public int Build()
         {
             CleanOutput();
+            SiteConfig = GetConfig();
 
             var postDirectory = Directory.GetFiles(PostsInputPath);
 
@@ -132,12 +162,13 @@ namespace Lockdown.Build
                 writer.Write("{% endblock %}\n");
                 writer.Flush();
 
-
                 Template template = Template.Parse(writer.ToString());
 
                 Posts.Add(MapToIndexPost(frontMatter, outFileName));
 
-                var rendered = template.Render(Hash.FromAnonymousObject(new { title = frontMatter.Title }));
+                var siteVars = new { site = SiteConfig, post = frontMatter };
+
+                var rendered = template.Render(Hash.FromAnonymousObject(siteVars));
 
                 using (var file = new System.IO.StreamWriter(Path.Combine(PostsOutputPath, outFileName)))
                 {

@@ -76,9 +76,11 @@ namespace Lockdown.Build
         {
             var indexPost = new IndexPost();
             indexPost.Title = post.Title;
-            indexPost.Dt = post.DateTime;
-            indexPost.DateTime = post.DateTime.ToString();
+            indexPost.Dt = post.DateTime.GetValueOrDefault(post.Date.GetValueOrDefault(DateTime.Now));
+            indexPost.DateTime = indexPost.Dt.ToString();
             indexPost.Url = PostsPath + "/" +  filename;
+            indexPost.Summary = post.Summary;
+            indexPost.Author = post.Author;
             return indexPost;
         }
 
@@ -148,12 +150,13 @@ namespace Lockdown.Build
                 var file_name = Path.GetFileNameWithoutExtension(file_path);
                 var outFileName = $"{file_name}.html";
                 var document = Markdown.Parse(file_text, MarkdownExtensions.Pipeline);
+                    
                 var frontMatter = document.GetFrontMatter<PostFrontMatter>();
 
                 var writer = new StringWriter();
                 var renderer = new HtmlRenderer(writer);
 
-                writer.Write($"{{% extends '{frontMatter.Layout}' %}}\n");
+                writer.Write($"{{% extends post %}}\n");
                 writer.Write("{% block post_content %}\n");
                 foreach (var documentPart in document.Skip(1))
                 {

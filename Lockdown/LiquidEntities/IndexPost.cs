@@ -8,6 +8,8 @@ namespace Lockdown.LiquidEntities
         public string DateTime { get; set; }
         public string Title { get; set; }
         public string Image { get; set; }
+        public string Summary { get; set; }
+        public string Author { get; set; }
         public string ImageCreditName { get; set; }
         public string ImageCreditUrl { get; set; }
         public string ImageAlt { get; set; }

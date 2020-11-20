@@ -43,7 +43,7 @@ namespace Lockdown.Commands
             var host = new WebHostBuilder()
                 .UseStartup<Startup>()
                 .UseKestrel()
-                .UseUrls($"http://127.0.0.1:{Port}")
+                .UseUrls($"http://*:{Port}")
                 .Build();
 
             host.Run();

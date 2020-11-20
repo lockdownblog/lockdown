@@ -409,4 +409,5 @@ MigrationBackup/
 # End of https://www.toptal.com/developers/gitignore/api/dotnetcore,visualstudio,visualstudiocode,macos
 
 **/_site/*
+**/.venv/
 example/[Ll]ockdown

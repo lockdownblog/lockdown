@@ -13,13 +13,10 @@ namespace Lockdown.Run
         {
 
             app.UseFileServer(new FileServerOptions()
-            
-            
-            {
-
-                FileProvider = new PhysicalFileProvider(
-                    Path.Combine(Directory.GetCurrentDirectory(), "_site"))
-            }
+                {
+                    FileProvider = new PhysicalFileProvider(
+                        Path.Combine(Directory.GetCurrentDirectory(), "_site"))
+                }
             );
         }
     }

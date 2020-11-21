@@ -5,12 +5,13 @@
     using global::Lockdown.Run;
     using McMaster.Extensions.CommandLineUtils;
     using Microsoft.AspNetCore.Hosting;
+    using Microsoft.Extensions.Configuration;
 
     internal class RunCommand : CommandBase
     {
         [Option("-o")]
         [LegalFilePath]
-        public string Output { get; set; }
+        public string Output { get; set; } = "./_site";
 
         [Option("--port")]
         public int Port { get; set; } = 5000;
@@ -33,10 +34,18 @@
 
         protected override int OnExecute(CommandLineApplication app)
         {
-            var builder = new SiteBuilder(this.Path, this.Output ?? "./_site");
+            var builder = new SiteBuilder(this.Path, this.Output);
             builder.Build();
 
+            var settings = new Dictionary<string, string>
+                {
+                    {"site", Output}
+                };
+            var configBuilder = new ConfigurationBuilder();
+            configBuilder.AddInMemoryCollection(settings);
+
             var host = new WebHostBuilder()
+                .UseConfiguration(configBuilder.Build())
                 .UseStartup<Startup>()
                 .UseKestrel()
                 .UseUrls($"http://*:{this.Port}")

@@ -21,7 +21,7 @@ namespace Lockdown.Tests
         {
             var workspace = Environment.GetEnvironmentVariable("GITHUB_WORKSPACE");
             RootDirectory = Path.Combine(workspace, "docs");
-            ExitDirectory = Path.Combine(RootDirectory, "_site");
+            ExitDirectory = Path.Combine(RootDirectory, "_docs");
 
             if (Directory.Exists(ExitDirectory))
             {

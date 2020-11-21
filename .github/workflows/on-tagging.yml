@@ -22,10 +22,10 @@ jobs:
     - name: Build
       run: make build
 
-    - uses: actions/upload-artifact@v2
-      with:
-        name: lockdown-builds
-        path: publish/
+#    - uses: actions/upload-artifact@v2
+#      with:
+#        name: lockdown-builds
+#        path: publish/
 
     - name: Build docs
       run: |

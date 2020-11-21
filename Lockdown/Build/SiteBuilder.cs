@@ -155,8 +155,10 @@
                 var writer = new StringWriter();
                 var renderer = new HtmlRenderer(writer);
 
-                writer.Write($"{{% extends post %}}\n");
+                writer.Write($"{{% extends 'post' %}}\n\n");
+
                 writer.Write("{% block post_content %}\n");
+
                 foreach (var documentPart in document.Skip(1))
                 {
                     renderer.Write(documentPart);
@@ -165,12 +167,13 @@
                 writer.Write("{% endblock %}\n");
                 writer.Flush();
 
-                Template template = Template.Parse(writer.ToString());
+                var indexPost = this.MapToIndexPost(frontMatter, outFileName); 
 
-                this.posts.Add(this.MapToIndexPost(frontMatter, outFileName));
+                this.posts.Add(indexPost);
 
-                var siteVars = new { site = this.siteConfig, post = frontMatter };
+                var siteVars = new { site = this.siteConfig, post = indexPost };
 
+                var template = Template.Parse(writer.ToString());
                 var rendered = template.Render(Hash.FromAnonymousObject(siteVars));
 
                 using var file = new System.IO.StreamWriter(Path.Combine(this.PostsOutputPath, outFileName));

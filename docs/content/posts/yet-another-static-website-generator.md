@@ -1,11 +1,7 @@
 ---
 layout: post
-title: "An old post!"
-tags: dotnet
-image: /assets/images/posts/misc/parse-frontmatter.jpg
-image_credit_name: Ben Sweet
-image_credit_url: https://unsplash.com/@benjaminsweet
-image_alt: Man standing in dark room blue light
+title: Yet another static website generator
+summary: "Lockdown is yet another static website generator, like many others but this one is made in C#"
 datetime: 2019-11-05 17:11
 ---
 

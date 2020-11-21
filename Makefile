@@ -10,6 +10,9 @@ build:
 	for i in $(targets); do \
 		dotnet publish ./Lockdown/Lockdown.csproj -r $$i -p:PublishSingleFile=true --self-contained false -o ./publish/$$i; \
 	done
-	
+
+build-docs:
+	dotnet run --project ./Lockdown/Lockdown.csproj -- run -p docs -o _docs 
+
 clean:
 	rm -rf ./publish

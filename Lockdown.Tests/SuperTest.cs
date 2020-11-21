@@ -1,14 +1,14 @@
-﻿namespace Lockdown.Tests
-{
-    using System;
-    using System.IO;
-    using System.Linq;
-    using System.Threading.Tasks;
-    using AngleSharp;
-    using AngleSharp.Dom;
-    using Lockdown.Build;
-    using Xunit;
+﻿using System;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
+using AngleSharp;
+using AngleSharp.Dom;
+using Lockdown.Build;
+using Xunit;
 
+namespace Lockdown.Tests
+{
     /// <summary>
     /// This test is massive and should be broken down into much smaller bits!
     /// </summary>
@@ -20,7 +20,7 @@
         public SuperTest()
         {
             var workspace = Environment.GetEnvironmentVariable("GITHUB_WORKSPACE");
-            RootDirectory = Path.Combine(workspace, "example");
+            RootDirectory = Path.Combine(workspace, "docs");
             ExitDirectory = Path.Combine(RootDirectory, "_site");
 
             if (Directory.Exists(ExitDirectory))
@@ -57,11 +57,11 @@
             Assert.True(lis.Count() == 2);
 
             var titleContainer = document.All.Where(
-                node => node.LocalName == "h1" && node.ClassName=="brand-title").First();
+                node => node.LocalName == "h1" && node.ClassName == "brand-title").First();
             Assert.True(titleContainer.TextContent == "Lockdown");
 
             var subTitleContainer = document.All.Where(
-                node => node.LocalName == "h2" && node.ClassName=="brand-tagline").First();
+                node => node.LocalName == "h2" && node.ClassName == "brand-tagline").First();
             Assert.True(subTitleContainer.TextContent == "A static website generator");
         }
     }

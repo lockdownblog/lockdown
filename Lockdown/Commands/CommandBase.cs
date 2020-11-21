@@ -1,13 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using McMaster.Extensions.CommandLineUtils;
-
-namespace Lockdown.Commands
+﻿namespace Lockdown.Commands
 {
-    [HelpOption("--help")]
-    abstract class CommandBase
-    {
+    using System;
+    using System.Collections.Generic;
+    using McMaster.Extensions.CommandLineUtils;
 
+    [HelpOption("--help")]
+    internal abstract class CommandBase
+    {
         [Option("-p")]
         [LegalFilePath]
         public string Path { get; set; } = "./";
@@ -16,7 +15,7 @@ namespace Lockdown.Commands
 
         protected virtual int OnExecute(CommandLineApplication app)
         {
-            var args = CreateArgs();
+            var args = this.CreateArgs();
 
             Console.WriteLine("Called " + ArgumentEscaper.EscapeAndConcatenate(args));
             return 0;

@@ -1,23 +1,22 @@
-﻿using System;
-using System.Linq;
-using Markdig;
-using Markdig.Extensions.Yaml;
-using Markdig.Syntax;
-using YamlDotNet.Serialization;
-
-namespace Lockdown.Build
+﻿namespace Lockdown.Build
 {
+    using System.Linq;
+    using Markdig;
+    using Markdig.Extensions.Yaml;
+    using Markdig.Syntax;
+    using YamlDotNet.Serialization;
+
     public static class MarkdownExtensions
     {
-        private static readonly IDeserializer YamlDeserializer =
-            new DeserializerBuilder()
-            .IgnoreUnmatchedProperties()
-            .Build();
-
         public static readonly MarkdownPipeline Pipeline
             = new MarkdownPipelineBuilder()
             .UseYamlFrontMatter()
             .UseAdvancedExtensions()
+            .Build();
+
+        private static readonly IDeserializer YamlDeserializer =
+            new DeserializerBuilder()
+            .IgnoreUnmatchedProperties()
             .Build();
 
         public static T GetFrontMatter<T>(this MarkdownDocument document)
@@ -27,14 +26,14 @@ namespace Lockdown.Build
                 .FirstOrDefault();
 
             if (block == null)
+            {
                 return default;
+            }
 
             var yaml =
                 block
-                // this is not a mistake
-                // we have to call .Lines 2x
-                .Lines // StringLineGroup[]
-                .Lines // StringLine[]
+                .Lines
+                .Lines
                 .OrderByDescending(x => x.Line)
                 .Select(x => $"{x}\n")
                 .ToList()
@@ -45,5 +44,4 @@ namespace Lockdown.Build
             return YamlDeserializer.Deserialize<T>(yaml);
         }
     }
-
 }

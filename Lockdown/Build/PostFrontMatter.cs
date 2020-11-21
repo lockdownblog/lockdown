@@ -1,17 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using DotLiquid;
-using YamlDotNet.Serialization;
-
-namespace Lockdown.Build
+﻿namespace Lockdown.Build
 {
+    using System;
+    using System.Linq;
+    using YamlDotNet.Serialization;
+
     public class PostFrontMatter
     {
         [YamlMember(Alias = "tags")]
         public string Tags { get; set; }
+
         [YamlMember(Alias = "layout")]
         public string Layout { get; set; }
+
         [YamlMember(Alias = "datetime")]
         public DateTime? DateTime { get; set; }
 
@@ -29,10 +29,13 @@ namespace Lockdown.Build
 
         [YamlMember(Alias = "image")]
         public string Image { get; set; }
+
         [YamlMember(Alias = "image_credit_name")]
         public string ImageCreditName { get; set; }
+
         [YamlMember(Alias = "image_credit_url")]
         public string ImageCreditUrl { get; set; }
+
         [YamlMember(Alias = "image_alt")]
         public string ImageAlt { get; set; }
 
@@ -40,7 +43,7 @@ namespace Lockdown.Build
         public string[] RedirectFrom { get; set; }
 
         [YamlIgnore]
-        public string[] GetTags => Tags?
+        public string[] GetTags => this.Tags?
             .Split(",", StringSplitOptions.RemoveEmptyEntries)
             .Select(x => x.Trim())
             .ToArray();

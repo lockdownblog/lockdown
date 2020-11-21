@@ -1,21 +1,39 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using DotLiquid;
-using Lockdown.LiquidEntities;
-using Markdig;
-using Markdig.Renderers;
-using YamlDotNet.Serialization;
-using LiquidSocial = Lockdown.LiquidEntities.Social;
-
-namespace Lockdown.Build
+﻿namespace Lockdown.Build
 {
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Linq;
+    using DotLiquid;
+    using global::Lockdown.LiquidEntities;
+    using Markdig;
+    using Markdig.Renderers;
+    using YamlDotNet.Serialization;
+    using LiquidSocial = global::Lockdown.LiquidEntities.Social;
 
     public class SiteBuilder
     {
-        const string PostsPath = "posts";
-        const string StaticPath = "static";
+        private const string PostsPath = "posts";
+        private const string StaticPath = "static";
+
+        private static readonly IDeserializer YamlDeserializer = new DeserializerBuilder()
+            .IgnoreUnmatchedProperties()
+            .Build();
+
+        private Site siteConfig;
+
+        private List<IndexPost> posts;
+
+        public SiteBuilder(string rootPath, string outPath)
+        {
+            this.RootPath = rootPath;
+            this.OutputPath = outPath;
+            this.PostsInputPath = Path.Combine(this.RootPath, "content", PostsPath);
+            this.StaticInputPath = Path.Combine(this.RootPath, StaticPath);
+            this.PostsOutputPath = Path.Combine(this.OutputPath, PostsPath);
+            this.posts = new List<IndexPost>();
+            Template.FileSystem = new LockdownFileSystem(Path.Combine(rootPath, "templates"));
+        }
 
         public string RootPath
         {
@@ -47,29 +65,15 @@ namespace Lockdown.Build
             private set;
         }
 
-        private Site SiteConfig;
-
-        List<IndexPost> Posts;
-
-        public SiteBuilder(string rootPath, string outPath)
-        {
-            RootPath = rootPath;
-            OutputPath = outPath;
-            PostsInputPath = Path.Combine(RootPath, "content", PostsPath);
-            StaticInputPath = Path.Combine(RootPath, StaticPath);
-            PostsOutputPath = Path.Combine(OutputPath, PostsPath);
-            Posts = new List<IndexPost>();
-            Template.FileSystem = new LockdownFileSystem(Path.Combine(rootPath, "templates"));
-        }
-
         public void CleanOutput()
         {
-            if (Directory.Exists(OutputPath))
+            if (Directory.Exists(this.OutputPath))
             {
-                Directory.Delete(OutputPath, recursive: true);
+                Directory.Delete(this.OutputPath, recursive: true);
             }
-            Directory.CreateDirectory(OutputPath);
-            Directory.CreateDirectory(PostsOutputPath);
+
+            Directory.CreateDirectory(this.OutputPath);
+            Directory.CreateDirectory(this.PostsOutputPath);
         }
 
         public IndexPost MapToIndexPost(PostFrontMatter post, string filename)
@@ -78,7 +82,7 @@ namespace Lockdown.Build
             indexPost.Title = post.Title;
             indexPost.Dt = post.DateTime.GetValueOrDefault(post.Date.GetValueOrDefault(DateTime.Now));
             indexPost.DateTime = indexPost.Dt.ToString();
-            indexPost.Url = PostsPath + "/" +  filename;
+            indexPost.Url = PostsPath + "/" + filename;
             indexPost.Summary = post.Summary;
             indexPost.Author = post.Author;
             return indexPost;
@@ -86,71 +90,66 @@ namespace Lockdown.Build
 
         public void WriteIndex()
         {
-            using (var file = new System.IO.StreamWriter(Path.Combine(OutputPath, "index.html")))
+            using (var file = new System.IO.StreamWriter(Path.Combine(this.OutputPath, "index.html")))
             {
-                var file_text = File.ReadAllText(Path.Combine(RootPath, "content", "index.html"));
+                var file_text = File.ReadAllText(Path.Combine(this.RootPath, "content", "index.html"));
                 var template = Template.Parse(file_text);
 
-                var orderedPosts = Posts.OrderBy(post => post.Dt).Reverse();
+                var orderedPosts = this.posts.OrderBy(post => post.Dt).Reverse();
 
-                var renderVars = Hash.FromAnonymousObject(new { 
-                    site = SiteConfig,
-                    posts = orderedPosts
+                var renderVars = Hash.FromAnonymousObject(new
+                {
+                    site = this.siteConfig,
+                    posts = orderedPosts,
                 });
 
                 var rendered = template.Render(renderVars);
                 file.Write(rendered);
             }
-
         }
 
         public void MoveStaticFiles()
         {
-            //Now Create all of the directories
-            foreach (string dirPath in Directory.GetDirectories(StaticInputPath, "*", 
-                SearchOption.AllDirectories))
-                Directory.CreateDirectory(dirPath.Replace(StaticInputPath, OutputPath));
+            foreach (string dirPath in Directory.GetDirectories(this.StaticInputPath, "*", SearchOption.AllDirectories))
+            {
+                Directory.CreateDirectory(dirPath.Replace(this.StaticInputPath, this.OutputPath));
+            }
 
-            //Copy all the files & Replaces any files with the same name
-            foreach (string newPath in Directory.GetFiles(StaticInputPath, "*.*", 
-                SearchOption.AllDirectories))
-                File.Copy(newPath, newPath.Replace(StaticInputPath, OutputPath), true);
+            foreach (string newPath in Directory.GetFiles(this.StaticInputPath, "*.*", SearchOption.AllDirectories))
+            {
+                File.Copy(newPath, newPath.Replace(this.StaticInputPath, this.OutputPath), true);
+            }
         }
-
-        private static readonly IDeserializer YamlDeserializer =
-            new DeserializerBuilder()
-            .IgnoreUnmatchedProperties()
-            .Build();
 
         public Site GetConfig()
         {
-            var siteConfig = File.ReadAllText(Path.Combine(RootPath, "site.yml"));
-            var config =  YamlDeserializer.Deserialize<SiteConfig>(siteConfig);
+            var siteConfig = File.ReadAllText(Path.Combine(this.RootPath, "site.yml"));
+            var config = YamlDeserializer.Deserialize<SiteConfig>(siteConfig);
 
-            return new Site 
+            return new Site
             {
                 Subtitle = config.Subtitle,
                 Title = config.Title,
                 Social = config.Social.Select(
-                    social => new LiquidSocial { Link = social.Link, Name = social.Name }
-                ).ToList()
+                    social => new LiquidSocial { Link = social.Link, Name = social.Name })
+                .ToList(),
             };
         }
 
         public int Build()
         {
-            CleanOutput();
-            SiteConfig = GetConfig();
+            this.CleanOutput();
+            this.siteConfig = this.GetConfig();
 
-            var postDirectory = Directory.GetFiles(PostsInputPath);
+            var postDirectory = Directory.GetFiles(this.PostsInputPath);
 
-            foreach(var file_path in postDirectory)
+            foreach (var file_path in postDirectory)
             {
                 var file_text = File.ReadAllText(file_path);
                 var file_name = Path.GetFileNameWithoutExtension(file_path);
                 var outFileName = $"{file_name}.html";
                 var document = Markdown.Parse(file_text, MarkdownExtensions.Pipeline);
-                    
+
                 var frontMatter = document.GetFrontMatter<PostFrontMatter>();
 
                 var writer = new StringWriter();
@@ -162,26 +161,24 @@ namespace Lockdown.Build
                 {
                     renderer.Write(documentPart);
                 }
+
                 writer.Write("{% endblock %}\n");
                 writer.Flush();
 
                 Template template = Template.Parse(writer.ToString());
 
-                Posts.Add(MapToIndexPost(frontMatter, outFileName));
+                this.posts.Add(this.MapToIndexPost(frontMatter, outFileName));
 
-                var siteVars = new { site = SiteConfig, post = frontMatter };
+                var siteVars = new { site = this.siteConfig, post = frontMatter };
 
                 var rendered = template.Render(Hash.FromAnonymousObject(siteVars));
 
-                using (var file = new System.IO.StreamWriter(Path.Combine(PostsOutputPath, outFileName)))
-                {
-                    file.Write(rendered);
-                }
+                using var file = new System.IO.StreamWriter(Path.Combine(this.PostsOutputPath, outFileName));
+                file.Write(rendered);
             }
 
-            MoveStaticFiles();
-            WriteIndex();
-
+            this.MoveStaticFiles();
+            this.WriteIndex();
 
             return 1;
         }

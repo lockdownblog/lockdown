@@ -1,21 +1,32 @@
-﻿using System;
-using DotLiquid;
-
-namespace Lockdown.LiquidEntities
+﻿namespace Lockdown.LiquidEntities
 {
+    using System;
+    using DotLiquid;
+
     public class IndexPost : Drop
     {
         public string DateTime { get; set; }
+
         public string Title { get; set; }
+
         public string Image { get; set; }
+
         public string Summary { get; set; }
+
         public string Author { get; set; }
+
         public string ImageCreditName { get; set; }
+
         public string ImageCreditUrl { get; set; }
+
         public string ImageAlt { get; set; }
+
         public string[] RedirectFrom { get; set; }
+
         public string Url { get; set; }
+
         public string[] Tags { get; set; }
+
         public DateTime Dt { get; set; }
     }
 }

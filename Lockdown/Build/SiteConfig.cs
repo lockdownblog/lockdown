@@ -1,16 +1,7 @@
 namespace Lockdown.Build
 {
-    using YamlDotNet.Serialization;
     using System.Collections.Generic;
-
-    public class Social
-    {
-        [YamlMember(Alias = "name")]
-        public string Name { get; set; }
-
-        [YamlMember(Alias = "link")]
-        public string Link { get; set; }
-    }
+    using YamlDotNet.Serialization;
 
     public class SiteConfig
     {

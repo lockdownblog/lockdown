@@ -26,3 +26,16 @@ jobs:
       with:
         name: lockdown-builds
         path: publish/
+
+    - name: Publish docs
+      run: |
+        chmod +x ./publish/linux-x64/Lockdown
+        ./publish/linux-x64/Lockdown -p docs -o _docs
+
+    - name: Deploy 🚀
+      uses: JamesIves/github-pages-deploy-action@3.7.1
+      with:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        BRANCH: docs # The branch the action should deploy to.
+        FOLDER: _docs # The folder the action should deploy.
+        CLEAN: true # Automatically remove deleted files from the deploy branch

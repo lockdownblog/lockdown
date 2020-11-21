@@ -30,7 +30,7 @@ jobs:
     - name: Publish docs
       run: |
         chmod +x ./publish/linux-x64/Lockdown
-        ./publish/linux-x64/Lockdown -p docs -o _docs
+        sudo ./publish/linux-x64/Lockdown -p docs -o _docs
 
     - name: Deploy 🚀
       uses: JamesIves/github-pages-deploy-action@3.7.1

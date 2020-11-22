@@ -9,7 +9,7 @@
     {
         [Option("-p")]
         [LegalFilePath]
-        public string Path { get; set; } = "./";
+        public string InputPath { get; set; } = "./";
 
         public abstract List<string> CreateArgs();
 

@@ -1,6 +1,7 @@
 ﻿namespace Lockdown.Commands
 {
     using System.Collections.Generic;
+    using System.IO;
     using global::Lockdown.Build;
     using global::Lockdown.Run;
     using McMaster.Extensions.CommandLineUtils;
@@ -11,7 +12,7 @@
     {
         [Option("-o")]
         [LegalFilePath]
-        public string Output { get; set; } = "./_site";
+        public string OutputPath { get; set; } = "./_site";
 
         [Option("--port")]
         public int Port { get; set; } = 5000;
@@ -23,10 +24,10 @@
             var args = this.Parent.CreateArgs();
             args.Add("build");
 
-            if (this.Path != null)
+            if (this.InputPath != null)
             {
                 args.Add("-p");
-                args.Add(this.Path);
+                args.Add(this.InputPath);
             }
 
             return args;
@@ -34,13 +35,15 @@
 
         protected override int OnExecute(CommandLineApplication app)
         {
-            var builder = new SiteBuilder(this.Path, this.Output);
+            var builder = new SiteBuilder(this.InputPath, this.OutputPath);
             builder.Build();
 
+            var webRoot = Path.Combine(Directory.GetCurrentDirectory(), this.OutputPath);
+
             var settings = new Dictionary<string, string>
-                {
-                    {"site", Output}
-                };
+            {
+                { "webRoot", webRoot },
+            };
             var configBuilder = new ConfigurationBuilder();
             configBuilder.AddInMemoryCollection(settings);
 

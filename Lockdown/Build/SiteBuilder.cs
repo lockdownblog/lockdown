@@ -167,7 +167,7 @@
                 writer.Write("{% endblock %}\n");
                 writer.Flush();
 
-                var indexPost = this.MapToIndexPost(frontMatter, outFileName); 
+                var indexPost = this.MapToIndexPost(frontMatter, outFileName);
 
                 this.posts.Add(indexPost);
 

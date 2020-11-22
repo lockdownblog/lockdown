@@ -17,10 +17,10 @@
             var args = this.Parent.CreateArgs();
             args.Add("build");
 
-            if (this.Path != null)
+            if (this.InputPath != null)
             {
                 args.Add("-p");
-                args.Add(this.Path);
+                args.Add(this.InputPath);
             }
 
             return args;
@@ -28,7 +28,7 @@
 
         protected override int OnExecute(CommandLineApplication app)
         {
-            var builder = new SiteBuilder(this.Path, this.Output ?? "./_site");
+            var builder = new SiteBuilder(this.InputPath, this.Output ?? "./_site");
             builder.Build();
             return 1;
         }

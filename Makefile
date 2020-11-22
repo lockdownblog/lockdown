@@ -9,10 +9,16 @@ init:
 build:
 	for i in $(targets); do \
 		dotnet publish ./Lockdown/Lockdown.csproj -r $$i -p:PublishSingleFile=true --self-contained false -o ./publish/$$i; \
-	done
-
+	done 
+	
 build-docs:
-	dotnet run --project ./Lockdown/Lockdown.csproj -- run -p docs -o _docs 
+	dotnet run --project ./Lockdown/Lockdown.csproj -- build -p docs -o _docs
+
+run-docs:
+	dotnet run --project ./Lockdown/Lockdown.csproj -- run -p docs -o _docs
+
+docker:
+	docker build -t lockdownblog/lockdown:${CURRENT_VERSION} .
 
 clean:
 	rm -rf ./publish

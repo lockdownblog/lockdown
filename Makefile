@@ -8,7 +8,7 @@ init:
 
 build:
 	for i in $(targets); do \
-		dotnet publish ./Lockdown/Lockdown.csproj -r $$i -p:PublishSingleFile=true --self-contained false -o ./publish/$$i; \
+		dotnet publish ./Lockdown/Lockdown.csproj -r $$i -p:PublishSingleFile=true --self-contained false -o ./publish/$$i-$(CURRENT_VERSION); \
 	done 
 	
 build-docs:

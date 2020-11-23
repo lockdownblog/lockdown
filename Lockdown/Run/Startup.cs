@@ -1,6 +1,5 @@
 namespace Lockdown.Run
 {
-    using System.IO;
     using Microsoft.AspNetCore.Builder;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.FileProviders;

@@ -11,6 +11,9 @@ namespace Lockdown.Build
         [YamlMember(Alias = "subtitle")]
         public string Subtitle { get; set; }
 
+        [YamlMember(Alias = "default-author")]
+        public string DefaultAuthor { get; set; }
+
         [YamlMember(Alias = "social")]
         public List<Social> Social { get; set; }
     }

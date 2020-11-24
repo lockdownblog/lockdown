@@ -118,14 +118,7 @@
             var siteConfig = File.ReadAllText(Path.Combine(this.RootPath, "site.yml"));
             var config = YamlDeserializer.Deserialize<SiteConfig>(siteConfig);
 
-            return new Site
-            {
-                Subtitle = config.Subtitle,
-                Title = config.Title,
-                Social = config.Social.Select(
-                    social => new LiquidSocial { Link = social.Link, Name = social.Name })
-                .ToList(),
-            };
+            return this.mapper.Map<Site>(config);
         }
 
         public IEnumerable<string> GetFilesIncludingSubfolders(string path)
@@ -137,6 +130,7 @@
             {
                 paths.AddRange(this.GetFilesIncludingSubfolders(directory));
             }
+
             paths.AddRange(Directory.GetFiles(path).ToList());
             return paths;
         }

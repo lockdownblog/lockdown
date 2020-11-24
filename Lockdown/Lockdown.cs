@@ -25,6 +25,11 @@
                         dest => dest.DateTime,
                         opt => opt.MapFrom(
                             orig => orig.DateTime.GetValueOrDefault(orig.Date.GetValueOrDefault(DateTime.Now))));
+
+                cfg.CreateMap<Build.Social, LiquidEntities.Social>()
+                    .ForMember(dest => dest.Context, opt => opt.Ignore());
+                cfg.CreateMap<SiteConfig, Site>()
+                    .ForMember(dest => dest.Context, opt => opt.Ignore());
             });
 
             configuration.AssertConfigurationIsValid();

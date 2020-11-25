@@ -9,6 +9,8 @@ namespace Lockdown.LiquidEntities
 
         public string Subtitle { get; set; }
 
+        public string DefaultAuthor { get; set; }
+
         public List<Social> Social { get; set; }
     }
 }

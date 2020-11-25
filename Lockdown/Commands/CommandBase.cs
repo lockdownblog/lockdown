@@ -1,7 +1,5 @@
 ﻿namespace Lockdown.Commands
 {
-    using System;
-    using System.Collections.Generic;
     using McMaster.Extensions.CommandLineUtils;
 
     [HelpOption("--help")]
@@ -9,15 +7,14 @@
     {
         [Option("-p")]
         [LegalFilePath]
-        public string Path { get; set; } = "./";
+        public string InputPath { get; set; } = "./";
 
-        public abstract List<string> CreateArgs();
+        [Option("-o")]
+        [LegalFilePath]
+        public string OutputPath { get; set; } = "./_site";
 
         protected virtual int OnExecute(CommandLineApplication app)
         {
-            var args = this.CreateArgs();
-
-            Console.WriteLine("Called " + ArgumentEscaper.EscapeAndConcatenate(args));
             return 0;
         }
     }

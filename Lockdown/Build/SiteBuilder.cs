@@ -177,7 +177,7 @@
                 var writer = new StringWriter();
                 var renderer = new HtmlRenderer(writer);
 
-                writer.Write($"{{% extends 'post' %}}\n\n");
+                writer.Write($"{{% extends '{frontMatter.Layout}' %}}\n\n");
 
                 writer.Write("{% block post_content %}\n");
 

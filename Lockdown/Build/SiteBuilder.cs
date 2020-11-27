@@ -80,14 +80,71 @@
             Directory.CreateDirectory(this.PostsOutputPath);
         }
 
+        public static List<List<T>> SplitList<T>(List<T> values, int size=30)  
+        {        
+            List<List<T>> list = new List<List<T>>();
+            for (int i = 0; i < values.Count; i += size) 
+            {
+                var finalSize = Math.Min(size, values.Count - i);
+                var content = values.GetRange(i, finalSize);
+                list.Add(content);
+            }  
+            return list;
+        } 
+
         public void WriteIndex()
         {
+            var orderedPosts = this.posts.OrderBy(post => post.DateTime).Reverse().ToList();
+            var splits = SplitList(orderedPosts, size: 10);
+
+            for(int i=0; i< splits.Count; i++)
+            {
+                var first = i == 0;
+                var last = i == splits.Count - 1;
+                var currentPage = i+1;
+
+                var index = first ? "index.html" : $"index-{i}.html";
+                var previousIndex = $"index-{i-1}.html";
+                var nextIndex = $"index-{i+1}.html";
+                if(i-1 ==0){
+                    previousIndex = "index.html";
+                }
+
+                var paginator = new IndexPage()
+                {
+                    PageCount = splits.Count,
+                    CurrentPage = currentPage,
+                    HasNextPage = !last,
+                    HasPreviousPage = !first,
+                    PreviousPage = currentPage - 1,
+                    NextPage = currentPage + 1,
+                    NextPageUrl = nextIndex,
+                    PreviousPageUrl = previousIndex,
+                    Posts = splits[i]
+                };
+
+                using (var file = new System.IO.StreamWriter(Path.Combine(this.OutputPath, index)))
+                {
+                    var file_text = File.ReadAllText(Path.Combine(this.RootPath, "content", "index.html"));
+                    var template = Template.Parse(file_text);
+
+                    var renderVars = Hash.FromAnonymousObject(new
+                    {
+                        site = this.siteConfig,
+                        paginator = paginator,
+                        posts = orderedPosts,
+                    });
+
+                    var rendered = template.Render(renderVars);
+                    file.Write(rendered);
+                }
+
+            }
+            /*
             using (var file = new System.IO.StreamWriter(Path.Combine(this.OutputPath, "index.html")))
             {
                 var file_text = File.ReadAllText(Path.Combine(this.RootPath, "content", "index.html"));
                 var template = Template.Parse(file_text);
-
-                var orderedPosts = this.posts.OrderBy(post => post.DateTime).Reverse();
 
                 var renderVars = Hash.FromAnonymousObject(new
                 {
@@ -98,6 +155,7 @@
                 var rendered = template.Render(renderVars);
                 file.Write(rendered);
             }
+            */
         }
 
         public void MoveStaticFiles()

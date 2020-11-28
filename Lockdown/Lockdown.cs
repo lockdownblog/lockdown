@@ -21,6 +21,8 @@
             {
                 cfg.CreateMap<PostFrontMatter, IndexPost>()
                     .ForMember(dest => dest.Context, opt => opt.Ignore())
+                    .ForMember(dest => dest.YoutubeId, opt => opt.MapFrom(
+                        orig => orig.YouTubeID))
                     .ForMember(
                         dest => dest.DateTime,
                         opt => opt.MapFrom(
@@ -28,6 +30,7 @@
 
                 cfg.CreateMap<Build.Social, LiquidEntities.Social>()
                     .ForMember(dest => dest.Context, opt => opt.Ignore());
+
                 cfg.CreateMap<SiteConfig, Site>()
                     .ForMember(dest => dest.Context, opt => opt.Ignore());
             });

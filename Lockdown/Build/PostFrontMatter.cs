@@ -12,6 +12,9 @@
         [YamlMember(Alias = "layout")]
         public string Layout { get; set; }
 
+        [YamlMember(Alias = "youtube_id")]
+        public string YouTubeID { get; set; }
+
         [YamlMember(Alias = "datetime")]
         public DateTime? DateTime { get; set; }
 

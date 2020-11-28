@@ -13,6 +13,8 @@
 
         public string Summary { get; set; }
 
+        public string YoutubeId { get; set; }
+
         public string Author { get; set; }
 
         public string ImageCreditName { get; set; }

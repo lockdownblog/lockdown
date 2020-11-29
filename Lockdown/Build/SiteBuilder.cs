@@ -15,6 +15,7 @@
     public class SiteBuilder
     {
         private const string PostsPath = "posts";
+        private const string PagesPath = "pages";
         private const string StaticPath = "static";
 
         private static readonly IDeserializer YamlDeserializer = new DeserializerBuilder()
@@ -25,6 +26,8 @@
 
         private List<IndexPost> posts;
 
+        private List<IndexPost> pages;
+
         private IMapper mapper;
 
         public SiteBuilder(string rootPath, string outPath, IMapper mapper)
@@ -32,9 +35,11 @@
             this.RootPath = rootPath;
             this.OutputPath = outPath;
             this.PostsInputPath = Path.Combine(this.RootPath, "content", PostsPath);
+            this.PagesInputPath = Path.Combine(this.RootPath, "content", PagesPath);
             this.StaticInputPath = Path.Combine(this.RootPath, StaticPath);
             this.PostsOutputPath = Path.Combine(this.OutputPath, PostsPath);
             this.posts = new List<IndexPost>();
+            this.pages = new List<IndexPost>();
             this.mapper = mapper;
             Template.FileSystem = new LockdownFileSystem(Path.Combine(rootPath, "templates"));
         }
@@ -52,6 +57,12 @@
         }
 
         public string PostsInputPath
+        {
+            get;
+            private set;
+        }
+
+        public string PagesInputPath
         {
             get;
             private set;
@@ -127,7 +138,7 @@
 
                 using (var file = new System.IO.StreamWriter(Path.Combine(this.OutputPath, index)))
                 {
-                    var file_text = File.ReadAllText(Path.Combine(this.RootPath, "content", "index.html"));
+                    var file_text = File.ReadAllText(Path.Combine(this.RootPath, "templates", "_index.liquid"));
                     var template = Template.Parse(file_text);
 
                     var renderVars = Hash.FromAnonymousObject(new
@@ -141,23 +152,6 @@
                     file.Write(rendered);
                 }
             }
-
-            /*
-            using (var file = new System.IO.StreamWriter(Path.Combine(this.OutputPath, "index.html")))
-            {
-                var file_text = File.ReadAllText(Path.Combine(this.RootPath, "content", "index.html"));
-                var template = Template.Parse(file_text);
-
-                var renderVars = Hash.FromAnonymousObject(new
-                {
-                    site = this.siteConfig,
-                    posts = orderedPosts,
-                });
-
-                var rendered = template.Render(renderVars);
-                file.Write(rendered);
-            }
-            */
         }
 
         public void MoveStaticFiles()
@@ -200,8 +194,55 @@
             this.CleanOutput();
             this.siteConfig = this.GetConfig();
 
-            var postDirectory = this.GetFilesIncludingSubfolders(this.PostsInputPath);
+            /*
+            var pagesDirectory = this.GetFilesIncludingSubfolders(this.PagesInputPath);
+            foreach (var file_path in pagesDirectory)
+            {
+                var file_text = File.ReadAllText(file_path);
+                var file_name = Path.GetFileNameWithoutExtension(file_path);
+                var fullFileName = file_path.Substring(this.PostsInputPath.Length).TrimStart('/', ' ');
+                string fileToWriteTo = null;
+                var outFileName = $"{file_name}.html";
+                string url = null;
 
+                fileToWriteTo = Path.Combine(this.OutputPath, outFileName);
+                url = PostsPath + "/" + outFileName;
+
+                var document = Markdown.Parse(file_text, MarkdownExtensions.Pipeline);
+
+                var frontMatter = document.GetFrontMatter<PostFrontMatter>();
+                frontMatter.Url = url;
+
+                var writer = new StringWriter();
+                var renderer = new HtmlRenderer(writer);
+
+                writer.Write($"{{% extends '{frontMatter.Layout}' %}}\n\n");
+
+                writer.Write("{% block page_content %}\n");
+
+                foreach (var documentPart in document.Skip(1))
+                {
+                    renderer.Write(documentPart);
+                }
+
+                writer.Write("{% endblock %}\n");
+                writer.Flush();
+
+                var indexPost = this.mapper.Map<IndexPost>(frontMatter);
+
+                this.pages.Add(indexPost);
+
+                var siteVars = new { site = this.siteConfig, page = indexPost };
+
+                var template = Template.Parse(writer.ToString());
+                var rendered = template.Render(Hash.FromAnonymousObject(siteVars));
+
+                using var file = new System.IO.StreamWriter(fileToWriteTo);
+                file.Write(rendered);
+            }
+            */
+
+            var postDirectory = this.GetFilesIncludingSubfolders(this.PostsInputPath);
             foreach (var file_path in postDirectory)
             {
                 var file_text = File.ReadAllText(file_path);
@@ -233,6 +274,7 @@
                 var document = Markdown.Parse(file_text, MarkdownExtensions.Pipeline);
 
                 var frontMatter = document.GetFrontMatter<PostFrontMatter>();
+                frontMatter.Url = url;
 
                 var writer = new StringWriter();
                 var renderer = new HtmlRenderer(writer);
@@ -249,7 +291,6 @@
                 writer.Write("{% endblock %}\n");
                 writer.Flush();
 
-                frontMatter.Url = url;
                 var indexPost = this.mapper.Map<IndexPost>(frontMatter);
 
                 this.posts.Add(indexPost);

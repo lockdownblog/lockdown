@@ -411,3 +411,4 @@ MigrationBackup/
 **/_site/*
 **/.venv/
 docs/[Ll]ockdown
+_docs/**

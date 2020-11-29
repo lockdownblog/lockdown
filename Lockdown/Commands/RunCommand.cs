@@ -32,7 +32,10 @@
 
         public void Dispose()
         {
-            this.fileWatcher.Dispose();
+            if (this.fileWatcher != null)
+            {
+                this.fileWatcher.Dispose();
+            }
         }
 
         protected override int OnExecute(CommandLineApplication app)

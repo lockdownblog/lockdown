@@ -10,7 +10,7 @@
     {
         public LockdownFileSystem(string root)
         {
-            this.Root = Path.GetFullPath(root);
+            this.Root = Path.GetFullPath(root).Replace('\\', '/');
         }
 
         public string Root { get; set; }

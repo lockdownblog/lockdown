@@ -3,7 +3,8 @@
 		<a href="/">{{ site.title }}</a>
 	</div>
 	<nav>
-		<a href="#">Page 1</a>
-		<a href="#">Page 2</a>
+		{% for page in pages %}
+		<a href="{{ page.url }}">{{ page.title }}</a>
+		{% endfor %}
 	</nav>
 </header>

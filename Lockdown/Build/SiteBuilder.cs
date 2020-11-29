@@ -32,16 +32,17 @@
 
         public SiteBuilder(string rootPath, string outPath, IMapper mapper)
         {
-            this.RootPath = rootPath;
+            this.RootPath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), rootPath));
             this.OutputPath = outPath;
             this.PostsInputPath = Path.Combine(this.RootPath, "content", PostsPath);
             this.PagesInputPath = Path.Combine(this.RootPath, "content", PagesPath);
             this.StaticInputPath = Path.Combine(this.RootPath, StaticPath);
             this.PostsOutputPath = Path.Combine(this.OutputPath, PostsPath);
+            this.PagesOutputPath = Path.Combine(this.OutputPath, PagesPath);
             this.posts = new List<IndexPost>();
             this.pages = new List<IndexPost>();
             this.mapper = mapper;
-            Template.FileSystem = new LockdownFileSystem(Path.Combine(rootPath, "templates"));
+            Template.FileSystem = new LockdownFileSystem(Path.Combine(this.RootPath, "templates"));
         }
 
         public string RootPath
@@ -80,6 +81,12 @@
             private set;
         }
 
+        public string PagesOutputPath
+        {
+            get;
+            private set;
+        }
+
         public static List<List<T>> SplitList<T>(List<T> values, int size = 30)
         {
             List<List<T>> list = new List<List<T>>();
@@ -102,6 +109,7 @@
 
             Directory.CreateDirectory(this.OutputPath);
             Directory.CreateDirectory(this.PostsOutputPath);
+            Directory.CreateDirectory(this.PagesOutputPath);
         }
 
         public void WriteIndex()
@@ -146,6 +154,7 @@
                         site = this.siteConfig,
                         paginator = paginator,
                         posts = orderedPosts,
+                        pages = this.pages,
                     });
 
                     var rendered = template.Render(renderVars);
@@ -178,6 +187,12 @@
         public IEnumerable<string> GetFilesIncludingSubfolders(string path)
         {
             var paths = new List<string>();
+
+            if (!Directory.Exists(path))
+            {
+                return paths;
+            }
+
             var directories = Directory.GetDirectories(path);
 
             foreach (var directory in directories)
@@ -194,7 +209,6 @@
             this.CleanOutput();
             this.siteConfig = this.GetConfig();
 
-            /*
             var pagesDirectory = this.GetFilesIncludingSubfolders(this.PagesInputPath);
             foreach (var file_path in pagesDirectory)
             {
@@ -205,8 +219,8 @@
                 var outFileName = $"{file_name}.html";
                 string url = null;
 
-                fileToWriteTo = Path.Combine(this.OutputPath, outFileName);
-                url = PostsPath + "/" + outFileName;
+                fileToWriteTo = Path.Combine(this.PagesOutputPath, outFileName);
+                url = PagesPath + "/" + outFileName;
 
                 var document = Markdown.Parse(file_text, MarkdownExtensions.Pipeline);
 
@@ -240,7 +254,6 @@
                 using var file = new System.IO.StreamWriter(fileToWriteTo);
                 file.Write(rendered);
             }
-            */
 
             var postDirectory = this.GetFilesIncludingSubfolders(this.PostsInputPath);
             foreach (var file_path in postDirectory)

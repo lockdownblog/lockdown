@@ -30,8 +30,10 @@
     <None Remove="BlankTemplate\templates\_header.liquid" />
     <None Remove="BlankTemplate\templates\_footer.liquid" />
     <None Remove="BlankTemplate\templates\_post.liquid" />
+    <None Remove="BlankTemplate\templates\_page.liquid" />
     <None Remove="BlankTemplate\templates\_head.liquid" />
     <None Remove="BlankTemplate\static\css\main.css" />
+    <None Remove="BlankTemplate\content\pages\about.md" />
     <None Remove="BlankTemplate\content\posts\first-post.md" />
     <None Remove="BlankTemplate\content\posts\second-post.md" />
   </ItemGroup>
@@ -42,8 +44,10 @@
     <EmbeddedResource Include="BlankTemplate\templates\_header.liquid" />
     <EmbeddedResource Include="BlankTemplate\templates\_footer.liquid" />
     <EmbeddedResource Include="BlankTemplate\templates\_post.liquid" />
+    <EmbeddedResource Include="BlankTemplate\templates\_page.liquid" />
     <EmbeddedResource Include="BlankTemplate\templates\_head.liquid" />
     <EmbeddedResource Include="BlankTemplate\static\css\main.css" />
+    <EmbeddedResource Include="BlankTemplate\content\pages\about.md" />
     <EmbeddedResource Include="BlankTemplate\content\posts\first-post.md" />
     <EmbeddedResource Include="BlankTemplate\content\posts\second-post.md" />
   </ItemGroup>

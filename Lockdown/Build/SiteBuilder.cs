@@ -217,7 +217,7 @@
 
                 writer.Write($"{{% extends '{frontMatter.Layout}' %}}\n\n");
 
-                writer.Write("{% block post_content %}\n");
+                writer.Write("{% block page_content %}\n");
 
                 foreach (var documentPart in document.Skip(1))
                 {
@@ -229,9 +229,9 @@
 
                 var indexPost = this.mapper.Map<IndexPost>(frontMatter);
 
-                this.posts.Add(indexPost);
+                this.pages.Add(indexPost);
 
-                var siteVars = new { site = this.siteConfig, post = indexPost };
+                var siteVars = new { site = this.siteConfig, page = indexPost };
 
                 var template = Template.Parse(writer.ToString());
                 var rendered = template.Render(Hash.FromAnonymousObject(siteVars));

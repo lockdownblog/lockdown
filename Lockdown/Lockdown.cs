@@ -13,7 +13,7 @@
     [VersionOptionFromMember("--version", MemberName = nameof(GetVersion))]
     [Subcommand(typeof(BuildCommand))]
     [Subcommand(typeof(RunCommand))]
-    internal class Lockdown : CommandBase
+    public class Lockdown : CommandBase
     {
         public Lockdown()
         {

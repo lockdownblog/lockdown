@@ -43,9 +43,10 @@ namespace Lockdown.Tests
         [Fact]
         public async Task TestBuild()
         {
+            var lockdown = new Lockdown();
             Assert.False(File.Exists(Path.Combine(ExitDirectory, "index.html")));
 
-            var siteBuilder = new SiteBuilder(RootDirectory, ExitDirectory);
+            var siteBuilder = new SiteBuilder(RootDirectory, ExitDirectory, lockdown.Mapper);
 
             siteBuilder.Build();
 

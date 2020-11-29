@@ -3,7 +3,7 @@
     using McMaster.Extensions.CommandLineUtils;
 
     [HelpOption("--help")]
-    internal abstract class CommandBase
+    public abstract class CommandBase
     {
         [Option("-p")]
         [LegalFilePath]

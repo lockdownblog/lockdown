@@ -9,9 +9,16 @@
     using Microsoft.AspNetCore.Hosting;
     using Microsoft.Extensions.Configuration;
 
-    internal class RunCommand : CommandBase
+    internal class RunCommand : CommandBase, IDisposable
     {
-        private FileSystemWatcher watcher;
+        private static readonly string[] WatchablePaths = new string[]
+        {
+            "content",
+            "static",
+            "site.yml",
+        };
+
+        private FileSystemWatcher fileWatcher;
 
         private SiteBuilder siteBuilder;
 
@@ -23,6 +30,11 @@
 
         private Lockdown Parent { get; set; }
 
+        public void Dispose()
+        {
+            this.fileWatcher.Dispose();
+        }
+
         protected override int OnExecute(CommandLineApplication app)
         {
             this.siteBuilder = new SiteBuilder(this.InputPath, this.OutputPath, this.Parent.Mapper);
@@ -31,20 +43,18 @@
             if (this.Watch)
             {
                 var path = Path.Combine(Environment.CurrentDirectory, this.InputPath);
-                this.watcher = new FileSystemWatcher
+                this.fileWatcher = new FileSystemWatcher
                 {
                     Path = path,
                     NotifyFilter =
-                    NotifyFilters.LastWrite |
-                    NotifyFilters.CreationTime |
-                    NotifyFilters.LastAccess,
+                    NotifyFilters.LastWrite,
                     IncludeSubdirectories = true,
                     EnableRaisingEvents = true,
                 };
-                this.watcher.Created += this.FileChanged;
-                this.watcher.Deleted += this.FileChanged;
-                this.watcher.Changed += this.FileChanged;
-                this.watcher.Renamed += this.FileChanged;
+                this.fileWatcher.Created += this.FileChanged;
+                this.fileWatcher.Deleted += this.FileChanged;
+                this.fileWatcher.Changed += this.FileChanged;
+                this.fileWatcher.Renamed += this.FileChanged;
             }
 
             var webRoot = Path.Combine(Directory.GetCurrentDirectory(), this.OutputPath);
@@ -70,8 +80,22 @@
 
         private void FileChanged(object sender, FileSystemEventArgs file)
         {
-            System.Console.WriteLine(file.FullPath);
-           //this.siteBuilder.Build();
+            // TODO: This fires twice, fix that!
+            var ok = false;
+            foreach (var watchablePath in WatchablePaths)
+            {
+                var startsWith = Path.GetFullPath(Path.Combine(this.InputPath, watchablePath));
+                ok = Path.GetFullPath(file.FullPath).StartsWith(startsWith);
+                if (ok)
+                {
+                    break;
+                }
+            }
+
+            if (ok)
+            {
+                this.siteBuilder.Build();
+            }
         }
     }
 }

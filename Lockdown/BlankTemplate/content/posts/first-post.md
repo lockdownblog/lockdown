@@ -1,12 +1,8 @@
 ---
 layout: post
-title: "What is lockdown?"
-tags: dotnet
-image: /assets/images/posts/misc/parse-frontmatter.jpg
-image_credit_name: Ben Sweet
-image_credit_url: https://unsplash.com/@benjaminsweet
-image_alt: Man standing in dark room blue light
-datetime: 2020-11-05 17:11
+title: "My first post!"
+summary: "This is my first Lockdown post"
+datetime: 2020-12-29 12:00
 ---
 
 ## Hello world!

@@ -138,7 +138,7 @@
 
                 using (var file = new System.IO.StreamWriter(Path.Combine(this.OutputPath, index)))
                 {
-                    var file_text = File.ReadAllText(Path.Combine(this.RootPath, "content", "index.html"));
+                    var file_text = File.ReadAllText(Path.Combine(this.RootPath, "templates", "_index.liquid"));
                     var template = Template.Parse(file_text);
 
                     var renderVars = Hash.FromAnonymousObject(new
@@ -194,6 +194,7 @@
             this.CleanOutput();
             this.siteConfig = this.GetConfig();
 
+            /*
             var pagesDirectory = this.GetFilesIncludingSubfolders(this.PagesInputPath);
             foreach (var file_path in pagesDirectory)
             {
@@ -239,6 +240,7 @@
                 using var file = new System.IO.StreamWriter(fileToWriteTo);
                 file.Write(rendered);
             }
+            */
 
             var postDirectory = this.GetFilesIncludingSubfolders(this.PostsInputPath);
             foreach (var file_path in postDirectory)

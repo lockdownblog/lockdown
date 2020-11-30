@@ -26,13 +26,11 @@ jobs:
 
       - 
         name: Build
-        run: make build
+        run: dotnet pack -c Release
 
       - 
-        uses: actions/upload-artifact@v2
-        with:
-          name: lockdown-builds
-          path: publish/
+        name: Publish to NuGet
+        run: dotnet nuget push -k ${{ secrets.NUGET_KEY }} -s https://www.nuget.org Lockdown/nupkg/
 
       - 
         name: Build docs

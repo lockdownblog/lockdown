@@ -1,8 +1,10 @@
-name: Main pipeline
+name: Tagging pipeline
 
 on:
   push:
     branches: main
+    tags:
+      - 'v*'
 
 jobs:
   main:
@@ -27,6 +29,12 @@ jobs:
         run: make build
 
       - 
+        uses: actions/upload-artifact@v2
+        with:
+          name: lockdown-builds
+          path: publish/
+
+      - 
         name: Build docs
         run: |
           make build-docs
@@ -39,3 +47,30 @@ jobs:
           BRANCH: docs # The branch the action should deploy to.
           FOLDER: _docs # The folder the action should deploy.
           CLEAN: true # Automatically remove deleted files from the deploy branch
+
+      -
+        name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      -
+        name: Login to DockerHub
+        uses: docker/login-action@v1 
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      -
+        name: Build and push
+        id: docker_build
+        uses: docker/build-push-action@v2
+        with:
+          push: true
+          tags: lockdownblog/lockdown:latest
+
+      -
+        name: Image digest
+        run: echo ${{ steps.docker_build.outputs.digest }}

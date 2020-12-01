@@ -3,6 +3,7 @@
     using System;
     using System.Collections.Generic;
     using System.IO;
+    using System.IO.Abstractions;
     using System.Linq;
     using AutoMapper;
     using DotLiquid;
@@ -28,11 +29,18 @@
 
         private readonly IMapper mapper;
 
+        private IFileSystem fileSystem;
+
         private Site siteConfig;
 
         public SiteBuilder(string rootPath, string outPath)
+            : this(rootPath, outPath, new FileSystem())
         {
+        }
 
+        public SiteBuilder(string rootPath, string outPath, IFileSystem fileSystem)
+        {
+            this.fileSystem = fileSystem;
             this.OutputPath = outPath;
             this.RootPath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), rootPath));
             this.PostsInputPath = Path.Combine(this.RootPath, "content", PostsPath);
@@ -103,14 +111,14 @@
 
         public void CleanOutput()
         {
-            if (Directory.Exists(this.OutputPath))
+            if (this.fileSystem.Directory.Exists(this.OutputPath))
             {
-                Directory.Delete(this.OutputPath, recursive: true);
+                this.fileSystem.Directory.Delete(this.OutputPath, recursive: true);
             }
 
-            Directory.CreateDirectory(this.OutputPath);
-            Directory.CreateDirectory(this.PostsOutputPath);
-            Directory.CreateDirectory(this.PagesOutputPath);
+            this.fileSystem.Directory.CreateDirectory(this.OutputPath);
+            this.fileSystem.Directory.CreateDirectory(this.PostsOutputPath);
+            this.fileSystem.Directory.CreateDirectory(this.PagesOutputPath);
         }
 
         public void WriteIndex()
@@ -145,8 +153,9 @@
                     Posts = splits[i],
                 };
 
-                using var file = new StreamWriter(Path.Combine(this.OutputPath, index));
-                var file_text = File.ReadAllText(Path.Combine(this.RootPath, "templates", "_index.liquid"));
+                var stream = this.fileSystem.File.OpenWrite(Path.Combine(this.OutputPath, index));
+                using var file = new StreamWriter(stream);
+                var file_text = this.fileSystem.File.ReadAllText(Path.Combine(this.RootPath, "templates", "_index.liquid"));
                 var template = Template.Parse(file_text);
 
                 var renderVars = Hash.FromAnonymousObject(new
@@ -166,18 +175,18 @@
         {
             foreach (string dirPath in Directory.GetDirectories(this.StaticInputPath, "*", SearchOption.AllDirectories))
             {
-                Directory.CreateDirectory(dirPath.Replace(this.StaticInputPath, this.OutputPath));
+                this.fileSystem.Directory.CreateDirectory(dirPath.Replace(this.StaticInputPath, this.OutputPath));
             }
 
             foreach (string newPath in Directory.GetFiles(this.StaticInputPath, "*.*", SearchOption.AllDirectories))
             {
-                File.Copy(newPath, newPath.Replace(this.StaticInputPath, this.OutputPath), true);
+                this.fileSystem.File.Copy(newPath, newPath.Replace(this.StaticInputPath, this.OutputPath), true);
             }
         }
 
         public Site GetConfig()
         {
-            var siteConfig = File.ReadAllText(Path.Combine(this.RootPath, "site.yml"));
+            var siteConfig = this.fileSystem.File.ReadAllText(Path.Combine(this.RootPath, "site.yml"));
             var config = YamlDeserializer.Deserialize<SiteConfiguration>(siteConfig);
 
             return this.mapper.Map<Site>(config);
@@ -187,19 +196,19 @@
         {
             var paths = new List<string>();
 
-            if (!Directory.Exists(path))
+            if (!this.fileSystem.Directory.Exists(path))
             {
                 return paths;
             }
 
-            var directories = Directory.GetDirectories(path);
+            var directories = this.fileSystem.Directory.GetDirectories(path);
 
             foreach (var directory in directories)
             {
                 paths.AddRange(this.GetFilesIncludingSubfolders(directory));
             }
 
-            paths.AddRange(Directory.GetFiles(path).ToList());
+            paths.AddRange(this.fileSystem.Directory.GetFiles(path).ToList());
             return paths;
         }
 
@@ -211,7 +220,7 @@
             var pagesDirectory = this.GetFilesIncludingSubfolders(this.PagesInputPath);
             foreach (var file_path in pagesDirectory)
             {
-                var file_text = File.ReadAllText(file_path);
+                var file_text = this.fileSystem.File.ReadAllText(file_path);
                 var file_name = Path.GetFileNameWithoutExtension(file_path);
                 var fullFileName = file_path.Substring(this.PostsInputPath.Length).TrimStart('/', ' ');
                 string fileToWriteTo = null;
@@ -250,14 +259,15 @@
                 var template = Template.Parse(writer.ToString());
                 var rendered = template.Render(Hash.FromAnonymousObject(siteVars));
 
-                using var file = new StreamWriter(fileToWriteTo);
+                var stream = this.fileSystem.File.OpenWrite(fileToWriteTo);
+                using var file = new StreamWriter(stream);
                 file.Write(rendered);
             }
 
             var postDirectory = this.GetFilesIncludingSubfolders(this.PostsInputPath);
             foreach (var file_path in postDirectory)
             {
-                var file_text = File.ReadAllText(file_path);
+                var file_text = this.fileSystem.File.ReadAllText(file_path);
                 var file_name = Path.GetFileNameWithoutExtension(file_path);
                 var fullFileName = file_path.Substring(this.PostsInputPath.Length).TrimStart('/', ' ');
                 var parts = fullFileName.Split('/', StringSplitOptions.RemoveEmptyEntries).SkipLast(1);
@@ -312,7 +322,8 @@
                 var template = Template.Parse(writer.ToString());
                 var rendered = template.Render(Hash.FromAnonymousObject(siteVars));
 
-                using var file = new StreamWriter(fileToWriteTo);
+                var stream = this.fileSystem.File.OpenWrite(fileToWriteTo);
+                using var file = new StreamWriter(stream);
                 file.Write(rendered);
             }
 

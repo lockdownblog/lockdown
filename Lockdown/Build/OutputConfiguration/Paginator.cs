@@ -1,10 +1,10 @@
-namespace Lockdown.LiquidEntities
+namespace Lockdown.Build.OutputConfiguration
 {
     using System.Collections;
     using System.Collections.Generic;
     using DotLiquid;
 
-    public class IndexPage : Drop, IEnumerable<IndexPost>
+    public class Paginator : Drop, IEnumerable<Post>
     {
         public int CurrentPage { get; set; }
 
@@ -22,9 +22,9 @@ namespace Lockdown.LiquidEntities
 
         public int PageCount { get; set; }
 
-        public List<IndexPost> Posts { get; set; }
+        public List<Post> Posts { get; set; }
 
-        public IEnumerator<IndexPost> GetEnumerator()
+        public IEnumerator<Post> GetEnumerator()
         {
             foreach (var post in this.Posts)
             {

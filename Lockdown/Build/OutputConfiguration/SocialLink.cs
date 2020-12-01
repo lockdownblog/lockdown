@@ -1,9 +1,8 @@
-﻿namespace Lockdown.LiquidEntities
+﻿namespace Lockdown.Build.OutputConfiguration
 {
-    using System.Collections.Generic;
     using DotLiquid;
 
-    public class Social : Drop
+    public class SocialLink : Drop
     {
         public string Name { get; set; }
 

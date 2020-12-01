@@ -40,7 +40,7 @@
 
         protected override int OnExecute(CommandLineApplication app)
         {
-            this.siteBuilder = new SiteBuilder(this.InputPath, this.OutputPath, this.Parent.Mapper);
+            this.siteBuilder = new SiteBuilder(this.InputPath, this.OutputPath);
             this.siteBuilder.Build();
 
             if (this.Watch)

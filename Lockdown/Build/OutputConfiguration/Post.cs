@@ -1,9 +1,9 @@
-﻿namespace Lockdown.LiquidEntities
+﻿namespace Lockdown.Build.OutputConfiguration
 {
     using System;
     using DotLiquid;
 
-    public class IndexPost : Drop
+    public class Post : Drop
     {
         public DateTime DateTime { get; set; }
 

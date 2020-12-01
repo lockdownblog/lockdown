@@ -46,7 +46,7 @@ namespace Lockdown.Tests
             var lockdown = new Lockdown();
             Assert.False(File.Exists(Path.Combine(ExitDirectory, "index.html")));
 
-            var siteBuilder = new SiteBuilder(RootDirectory, ExitDirectory, lockdown.Mapper);
+            var siteBuilder = new SiteBuilder(RootDirectory, ExitDirectory);
 
             siteBuilder.Build();
 

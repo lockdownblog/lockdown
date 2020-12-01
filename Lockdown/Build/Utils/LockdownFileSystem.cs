@@ -1,4 +1,4 @@
-﻿namespace Lockdown.Build
+﻿namespace Lockdown.Build.Utils
 {
     using System.IO;
     using System.Text.RegularExpressions;

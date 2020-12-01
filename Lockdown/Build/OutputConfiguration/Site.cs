@@ -1,4 +1,4 @@
-namespace Lockdown.LiquidEntities
+namespace Lockdown.Build.OutputConfiguration
 {
     using System.Collections.Generic;
     using DotLiquid;
@@ -11,6 +11,6 @@ namespace Lockdown.LiquidEntities
 
         public string DefaultAuthor { get; set; }
 
-        public List<Social> Social { get; set; }
+        public List<SocialLink> Social { get; set; }
     }
 }

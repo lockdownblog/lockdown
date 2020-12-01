@@ -6,11 +6,11 @@
     using System.Linq;
     using AutoMapper;
     using DotLiquid;
-    using global::Lockdown.LiquidEntities;
-    using Markdig;
+    using global::Lockdown.Build.InputConfiguration;
+    using global::Lockdown.Build.OutputConfiguration;
+    using global::Lockdown.Build.Utils;
     using Markdig.Renderers;
     using YamlDotNet.Serialization;
-    using LiquidSocial = global::Lockdown.LiquidEntities.Social;
 
     public class SiteBuilder
     {
@@ -22,26 +22,27 @@
             .IgnoreUnmatchedProperties()
             .Build();
 
+        private readonly List<Post> posts;
+
+        private readonly List<Post> pages;
+
+        private readonly IMapper mapper;
+
         private Site siteConfig;
 
-        private List<IndexPost> posts;
-
-        private List<IndexPost> pages;
-
-        private IMapper mapper;
-
-        public SiteBuilder(string rootPath, string outPath, IMapper mapper)
+        public SiteBuilder(string rootPath, string outPath)
         {
-            this.RootPath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), rootPath));
+
             this.OutputPath = outPath;
+            this.RootPath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), rootPath));
             this.PostsInputPath = Path.Combine(this.RootPath, "content", PostsPath);
             this.PagesInputPath = Path.Combine(this.RootPath, "content", PagesPath);
             this.StaticInputPath = Path.Combine(this.RootPath, StaticPath);
             this.PostsOutputPath = Path.Combine(this.OutputPath, PostsPath);
             this.PagesOutputPath = Path.Combine(this.OutputPath, PagesPath);
-            this.posts = new List<IndexPost>();
-            this.pages = new List<IndexPost>();
-            this.mapper = mapper;
+            this.posts = new List<Post>();
+            this.pages = new List<Post>();
+            this.mapper = Mapping.Mapper.GetMapper();
             Template.FileSystem = new LockdownFileSystem(Path.Combine(this.RootPath, "templates"));
         }
 
@@ -131,7 +132,7 @@
                     previousIndex = "index.html";
                 }
 
-                var paginator = new IndexPage()
+                var paginator = new Paginator()
                 {
                     PageCount = splits.Count,
                     CurrentPage = currentPage,
@@ -144,22 +145,20 @@
                     Posts = splits[i],
                 };
 
-                using (var file = new System.IO.StreamWriter(Path.Combine(this.OutputPath, index)))
+                using var file = new StreamWriter(Path.Combine(this.OutputPath, index));
+                var file_text = File.ReadAllText(Path.Combine(this.RootPath, "templates", "_index.liquid"));
+                var template = Template.Parse(file_text);
+
+                var renderVars = Hash.FromAnonymousObject(new
                 {
-                    var file_text = File.ReadAllText(Path.Combine(this.RootPath, "templates", "_index.liquid"));
-                    var template = Template.Parse(file_text);
+                    site = this.siteConfig,
+                    paginator = paginator,
+                    posts = orderedPosts,
+                    pages = this.pages,
+                });
 
-                    var renderVars = Hash.FromAnonymousObject(new
-                    {
-                        site = this.siteConfig,
-                        paginator = paginator,
-                        posts = orderedPosts,
-                        pages = this.pages,
-                    });
-
-                    var rendered = template.Render(renderVars);
-                    file.Write(rendered);
-                }
+                var rendered = template.Render(renderVars);
+                file.Write(rendered);
             }
         }
 
@@ -179,7 +178,7 @@
         public Site GetConfig()
         {
             var siteConfig = File.ReadAllText(Path.Combine(this.RootPath, "site.yml"));
-            var config = YamlDeserializer.Deserialize<SiteConfig>(siteConfig);
+            var config = YamlDeserializer.Deserialize<SiteConfiguration>(siteConfig);
 
             return this.mapper.Map<Site>(config);
         }
@@ -222,9 +221,9 @@
                 fileToWriteTo = Path.Combine(this.PagesOutputPath, outFileName);
                 url = PagesPath + "/" + outFileName;
 
-                var document = Markdown.Parse(file_text, MarkdownExtensions.Pipeline);
+                var document = file_text.ParseMarkdown();
 
-                var frontMatter = document.GetFrontMatter<PostFrontMatter>();
+                var frontMatter = document.GetFrontMatter<PostConfiguration>();
                 frontMatter.Url = url;
 
                 var writer = new StringWriter();
@@ -242,7 +241,7 @@
                 writer.Write("{% endblock %}\n");
                 writer.Flush();
 
-                var indexPost = this.mapper.Map<IndexPost>(frontMatter);
+                var indexPost = this.mapper.Map<Post>(frontMatter);
 
                 this.pages.Add(indexPost);
 
@@ -251,7 +250,7 @@
                 var template = Template.Parse(writer.ToString());
                 var rendered = template.Render(Hash.FromAnonymousObject(siteVars));
 
-                using var file = new System.IO.StreamWriter(fileToWriteTo);
+                using var file = new StreamWriter(fileToWriteTo);
                 file.Write(rendered);
             }
 
@@ -267,7 +266,7 @@
                 var outFileName = string.IsNullOrWhiteSpace(newFileDirectory) ? $"{file_name}.html" : Path.Combine(newFileDirectory, $"{file_name}.html");
                 string url = null;
 
-                if (parts.Count() > 0)
+                if (parts.Any())
                 {
                     var path = Path.Combine(this.OutputPath, newFileDirectory);
                     if (!Directory.Exists(path))
@@ -284,9 +283,9 @@
                     url = PostsPath + "/" + outFileName;
                 }
 
-                var document = Markdown.Parse(file_text, MarkdownExtensions.Pipeline);
+                var document = file_text.ParseMarkdown();
 
-                var frontMatter = document.GetFrontMatter<PostFrontMatter>();
+                var frontMatter = document.GetFrontMatter<PostConfiguration>();
                 frontMatter.Url = url;
 
                 var writer = new StringWriter();
@@ -304,7 +303,7 @@
                 writer.Write("{% endblock %}\n");
                 writer.Flush();
 
-                var indexPost = this.mapper.Map<IndexPost>(frontMatter);
+                var indexPost = this.mapper.Map<Post>(frontMatter);
 
                 this.posts.Add(indexPost);
 
@@ -313,7 +312,7 @@
                 var template = Template.Parse(writer.ToString());
                 var rendered = template.Render(Hash.FromAnonymousObject(siteVars));
 
-                using var file = new System.IO.StreamWriter(fileToWriteTo);
+                using var file = new StreamWriter(fileToWriteTo);
                 file.Write(rendered);
             }
 

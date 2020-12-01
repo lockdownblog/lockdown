@@ -1,4 +1,4 @@
-﻿namespace Lockdown.Build
+﻿namespace Lockdown.Build.Utils
 {
     using System.Linq;
     using Markdig;
@@ -18,6 +18,11 @@
             new DeserializerBuilder()
             .IgnoreUnmatchedProperties()
             .Build();
+
+        public static MarkdownDocument ParseMarkdown(this string text)
+        {
+            return Markdown.Parse(text, Pipeline);
+        }
 
         public static T GetFrontMatter<T>(this MarkdownDocument document)
         {

@@ -1,9 +1,9 @@
-namespace Lockdown.Build
+namespace Lockdown.Build.InputConfiguration
 {
     using System.Collections.Generic;
     using YamlDotNet.Serialization;
 
-    public class SiteConfig
+    public class SiteConfiguration
     {
         [YamlMember(Alias = "title")]
         public string Title { get; set; }
@@ -15,6 +15,6 @@ namespace Lockdown.Build
         public string DefaultAuthor { get; set; }
 
         [YamlMember(Alias = "social")]
-        public List<Social> Social { get; set; }
+        public List<SocialLink> Social { get; set; }
     }
 }

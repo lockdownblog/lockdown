@@ -10,7 +10,7 @@
 
         protected override int OnExecute(CommandLineApplication app)
         {
-            var builder = new SiteBuilder(this.InputPath, this.OutputPath, this.Parent.Mapper);
+            var builder = new SiteBuilder(this.InputPath, this.OutputPath);
             builder.Build();
             return 1;
         }

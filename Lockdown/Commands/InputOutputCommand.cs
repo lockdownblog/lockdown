@@ -13,9 +13,6 @@
         [LegalFilePath]
         public string OutputPath { get; set; } = "./_site";
 
-        protected virtual int OnExecute(CommandLineApplication app)
-        {
-            return 0;
-        }
+        protected override int OnExecute(CommandLineApplication app) => 0;
     }
 }

@@ -61,7 +61,7 @@ namespace Lockdown.Tests
 
             var subTitleContainer = indexDocument.All.First(node => node.LocalName == "div" && node.ClassName == "site-description");
             subTitleContainer.TextContent.Trim().ShouldBe("Edit this subtitle in the site.yml file");
-            
+
             var secondPostFile = Path.Combine(ExitDirectory, "posts", "second-post.html");
             MockFileSystem.File.Exists(secondPostFile).ShouldBeTrue();
             var secondPost = await OpenDocument(secondPostFile);

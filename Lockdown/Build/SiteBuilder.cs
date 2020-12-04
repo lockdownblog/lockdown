@@ -220,116 +220,100 @@
             var pagesDirectory = this.GetFilesIncludingSubfolders(this.PagesInputPath);
             foreach (var filePath in pagesDirectory)
             {
-                var fileText = this.fileSystem.File.ReadAllText(filePath);
-                var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(filePath);
-                string fileToWriteTo = null;
-                var outFileName = $"{fileNameWithoutExtension}.html";
-                string url = null;
-
-                fileToWriteTo = Path.Combine(this.PagesOutputPath, outFileName);
-                url = PagesPath + "/" + outFileName;
-
-                var document = fileText.ParseMarkdown();
-
-                var frontMatter = document.GetFrontMatter<PostConfiguration>();
-                frontMatter.Url = url;
-
-                var writer = new StringWriter();
-                var renderer = new HtmlRenderer(writer);
-
-                writer.Write($"{{% extends '{frontMatter.Layout}' %}}\n\n");
-
-                writer.Write("{% block page_content %}\n");
-
-                foreach (var documentPart in document.Skip(1))
-                {
-                    renderer.Write(documentPart);
-                }
-
-                writer.Write("{% endblock %}\n");
-                writer.Flush();
-
-                var indexPost = this.mapper.Map<Post>(frontMatter);
-
-                this.pages.Add(indexPost);
-
-                var siteVars = new { site = this.siteConfig, page = indexPost };
-
-                var template = Template.Parse(writer.ToString());
-                var rendered = template.Render(Hash.FromAnonymousObject(siteVars));
-
-                var stream = this.fileSystem.File.OpenWrite(fileToWriteTo);
-                using var file = new StreamWriter(stream);
-                file.Write(rendered);
+                var page = this.GenerateContent<Post>(filePath, "page_content", this.CalculatePageRoutes);
+                this.pages.Add(page);
             }
 
             var postDirectory = this.GetFilesIncludingSubfolders(this.PostsInputPath);
             foreach (var filePath in postDirectory)
             {
-                var fileText = this.fileSystem.File.ReadAllText(filePath);
-                var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(filePath);
-                var fullFileName = filePath.Substring(this.PostsInputPath.Length).TrimStart('/', ' ');
-                var parts = fullFileName.Split('/', StringSplitOptions.RemoveEmptyEntries).SkipLast(1);
-                string newFileDirectory = Path.Combine(parts.ToArray());
-                string fileToWriteTo = null;
-                var outFileName = string.IsNullOrWhiteSpace(newFileDirectory) ? $"{fileNameWithoutExtension}.html" : Path.Combine(newFileDirectory, $"{fileNameWithoutExtension}.html");
-                string url = null;
-
-                if (parts.Any())
-                {
-                    var path = Path.Combine(this.OutputPath, newFileDirectory);
-                    if (!Directory.Exists(path))
-                    {
-                        Directory.CreateDirectory(path);
-                    }
-
-                    fileToWriteTo = Path.Combine(this.OutputPath, outFileName);
-                    url = outFileName;
-                }
-                else
-                {
-                    fileToWriteTo = Path.Combine(this.PostsOutputPath, outFileName);
-                    url = PostsPath + "/" + outFileName;
-                }
-
-                var document = fileText.ParseMarkdown();
-
-                var frontMatter = document.GetFrontMatter<PostConfiguration>();
-                frontMatter.Url = url;
-
-                var writer = new StringWriter();
-                var renderer = new HtmlRenderer(writer);
-
-                writer.Write($"{{% extends '{frontMatter.Layout}' %}}\n\n");
-
-                writer.Write("{% block post_content %}\n");
-
-                foreach (var documentPart in document.Skip(1))
-                {
-                    renderer.Write(documentPart);
-                }
-
-                writer.Write("{% endblock %}\n");
-                writer.Flush();
-
-                var indexPost = this.mapper.Map<Post>(frontMatter);
-
-                this.posts.Add(indexPost);
-
-                var siteVars = new { site = this.siteConfig, post = indexPost };
-
-                var template = Template.Parse(writer.ToString());
-                var rendered = template.Render(Hash.FromAnonymousObject(siteVars));
-
-                var stream = this.fileSystem.File.OpenWrite(fileToWriteTo);
-                using var file = new StreamWriter(stream);
-                file.Write(rendered);
+                var post = this.GenerateContent<Post>(filePath, "post_content", this.CalculatePostRoutes);
+                this.posts.Add(post);
             }
 
             this.MoveStaticFiles();
             this.WriteIndex();
 
             return 1;
+        }
+
+        private T GenerateContent<T>(string filePath, string contentBlockName, Func<string, IEnumerable<string>, Tuple<string, string>> routeCalculator)
+            where T : Post
+        {
+            var fileText = this.fileSystem.File.ReadAllText(filePath);
+            var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(filePath);
+            var parts = filePath.Substring(this.PostsInputPath.Length).TrimStart('/', ' ')
+                .Split('/', StringSplitOptions.RemoveEmptyEntries).SkipLast(1);
+
+            var (fileToWriteTo, url) = routeCalculator(fileNameWithoutExtension, parts);
+
+            var document = fileText.ParseMarkdown();
+
+            var frontMatter = document.GetFrontMatter<PostConfiguration>();
+            frontMatter.Url = url;
+
+            var writer = new StringWriter();
+            var renderer = new HtmlRenderer(writer);
+
+            writer.Write($"{{% extends '{frontMatter.Layout}' %}}\n\n");
+
+            writer.Write($"{{% block {contentBlockName} %}}\n");
+
+            foreach (var documentPart in document.Skip(1))
+            {
+                renderer.Write(documentPart);
+            }
+
+            writer.Write("{% endblock %}\n");
+            writer.Flush();
+
+            var pageContent = this.mapper.Map<T>(frontMatter);
+
+            var siteVars = new { site = this.siteConfig, post = pageContent, page = pageContent };
+
+            var template = Template.Parse(writer.ToString());
+            var rendered = template.Render(Hash.FromAnonymousObject(siteVars));
+
+            var stream = this.fileSystem.File.OpenWrite(fileToWriteTo);
+            using var file = new StreamWriter(stream);
+            file.Write(rendered);
+
+            return pageContent;
+        }
+
+        private Tuple<string, string> CalculatePageRoutes(string fileNameWithoutExtension, IEnumerable<string> parts = null)
+        {
+            var outFileName = $"{fileNameWithoutExtension}.html";
+            var fileToWriteTo = Path.Combine(this.PagesOutputPath, outFileName);
+            var url = PagesPath + "/" + outFileName;
+
+            return Tuple.Create(fileToWriteTo, url);
+        }
+
+        private Tuple<string, string> CalculatePostRoutes(string fileNameWithoutExtension, IEnumerable<string> parts)
+        {
+            string fileToWriteTo;
+            string url;
+            var finalFilename = $"{fileNameWithoutExtension}.html";
+            if (parts.Any())
+            {
+                var newFileDirectory = Path.Combine(parts.ToArray());
+                var path = Path.Combine(this.OutputPath, newFileDirectory);
+                if (!Directory.Exists(path))
+                {
+                    Directory.CreateDirectory(path);
+                }
+
+                fileToWriteTo = Path.Combine(this.OutputPath, finalFilename);
+                url = finalFilename;
+            }
+            else
+            {
+                fileToWriteTo = Path.Combine(this.PostsOutputPath, finalFilename);
+                url = PostsPath + "/" + finalFilename;
+            }
+
+            return Tuple.Create(fileToWriteTo, url);
         }
     }
 }

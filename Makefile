@@ -1,4 +1,4 @@
-CURRENT_VERSION=0.0.2
+CURRENT_VERSION=0.0.3
 
 BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 HASH := $(shell git rev-parse HEAD)

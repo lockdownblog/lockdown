@@ -6,12 +6,18 @@
 
     internal class BuildCommand : InputOutputCommand
     {
+        private readonly ISiteBuilder siteBuilder;
+
+        public BuildCommand(ISiteBuilder siteBuilder)
+        {
+            this.siteBuilder = siteBuilder;
+        }
+
         private Lockdown Parent { get; set; }
 
         protected override int OnExecute(CommandLineApplication app)
         {
-            var builder = new SiteBuilder(this.InputPath, this.OutputPath);
-            builder.Build();
+            this.siteBuilder.Build(this.InputPath, this.OutputPath);
             return 1;
         }
     }

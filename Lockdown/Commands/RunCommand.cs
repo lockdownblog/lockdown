@@ -18,9 +18,14 @@
             "site.yml",
         };
 
+        private readonly ISiteBuilder siteBuilder;
+
         private FileSystemWatcher fileWatcher;
 
-        private SiteBuilder siteBuilder;
+        public RunCommand(ISiteBuilder siteBuilder)
+        {
+            this.siteBuilder = siteBuilder;
+        }
 
         [Option("--port")]
         public int Port { get; set; } = 5000;
@@ -40,8 +45,7 @@
 
         protected override int OnExecute(CommandLineApplication app)
         {
-            this.siteBuilder = new SiteBuilder(this.InputPath, this.OutputPath);
-            this.siteBuilder.Build();
+            this.siteBuilder.Build(this.InputPath, this.OutputPath);
 
             if (this.Watch)
             {
@@ -49,8 +53,7 @@
                 this.fileWatcher = new FileSystemWatcher
                 {
                     Path = path,
-                    NotifyFilter =
-                    NotifyFilters.LastWrite,
+                    NotifyFilter = NotifyFilters.LastWrite,
                     IncludeSubdirectories = true,
                     EnableRaisingEvents = true,
                 };
@@ -97,7 +100,7 @@
 
             if (ok)
             {
-                this.siteBuilder.Build();
+                this.siteBuilder.Build(this.InputPath, this.OutputPath);
             }
         }
     }

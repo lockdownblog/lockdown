@@ -8,8 +8,6 @@
 
     internal class NewCommand : InputOutputCommand
     {
-        private string fullOutputPath;
-
         [Argument(0)]
         [Required]
         public string RootDirectory { get; }
@@ -18,8 +16,6 @@
 
         protected override int OnExecute(CommandLineApplication app)
         {
-            this.fullOutputPath = Path.GetFullPath(this.RootDirectory);
-
             var assembly = Assembly.GetExecutingAssembly();
             var resources = assembly.GetManifestResourceNames();
 

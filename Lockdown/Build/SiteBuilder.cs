@@ -13,7 +13,7 @@
     using Markdig.Renderers;
     using YamlDotNet.Serialization;
 
-    public class SiteBuilder
+    public class SiteBuilder : ISiteBuilder
     {
         private const string PostsPath = "posts";
         private const string PagesPath = "pages";
@@ -33,25 +33,12 @@
 
         private Site siteConfig;
 
-        public SiteBuilder(string rootPath, string outPath)
-            : this(rootPath, outPath, new FileSystem())
-        {
-        }
-
-        public SiteBuilder(string rootPath, string outPath, IFileSystem fileSystem)
+        public SiteBuilder(IFileSystem fileSystem, IMapper mapper)
         {
             this.fileSystem = fileSystem;
-            this.OutputPath = outPath;
-            this.RootPath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), rootPath));
-            this.PostsInputPath = Path.Combine(this.RootPath, "content", PostsPath);
-            this.PagesInputPath = Path.Combine(this.RootPath, "content", PagesPath);
-            this.StaticInputPath = Path.Combine(this.RootPath, StaticPath);
-            this.PostsOutputPath = Path.Combine(this.OutputPath, PostsPath);
-            this.PagesOutputPath = Path.Combine(this.OutputPath, PagesPath);
             this.posts = new List<Post>();
             this.pages = new List<Post>();
-            this.mapper = Mapping.Mapper.GetMapper();
-            Template.FileSystem = new LockdownFileSystem(Path.Combine(this.RootPath, "templates"));
+            this.mapper = mapper;
         }
 
         public string RootPath
@@ -96,7 +83,31 @@
             private set;
         }
 
-        public static List<List<T>> SplitList<T>(List<T> values, int size = 30)
+        public void Build(string rootPath, string outPath)
+        {
+            this.SetPaths(rootPath, outPath);
+            this.CleanOutput();
+            this.siteConfig = this.GetConfig();
+
+            var pagesDirectory = this.GetFilesIncludingSubfolders(this.PagesInputPath);
+            foreach (var filePath in pagesDirectory)
+            {
+                var page = this.GenerateContent<Post>(filePath, "page_content", this.CalculatePageRoutes);
+                this.pages.Add(page);
+            }
+
+            var postDirectory = this.GetFilesIncludingSubfolders(this.PostsInputPath);
+            foreach (var filePath in postDirectory)
+            {
+                var post = this.GenerateContent<Post>(filePath, "post_content", this.CalculatePostRoutes);
+                this.posts.Add(post);
+            }
+
+            this.MoveStaticFiles();
+            this.WriteIndex();
+        }
+
+        private static List<List<T>> SplitList<T>(List<T> values, int size = 30)
         {
             List<List<T>> list = new List<List<T>>();
             for (int i = 0; i < values.Count; i += size)
@@ -109,7 +120,7 @@
             return list;
         }
 
-        public void CleanOutput()
+        private void CleanOutput()
         {
             if (this.fileSystem.Directory.Exists(this.OutputPath))
             {
@@ -121,7 +132,7 @@
             this.fileSystem.Directory.CreateDirectory(this.PagesOutputPath);
         }
 
-        public void WriteIndex()
+        private void WriteIndex()
         {
             var orderedPosts = this.posts.OrderBy(post => post.DateTime).Reverse().ToList();
             var splits = SplitList(orderedPosts, size: 10);
@@ -171,7 +182,7 @@
             }
         }
 
-        public void MoveStaticFiles()
+        private void MoveStaticFiles()
         {
             foreach (string dirPath in Directory.GetDirectories(this.StaticInputPath, "*", SearchOption.AllDirectories))
             {
@@ -184,7 +195,7 @@
             }
         }
 
-        public Site GetConfig()
+        private Site GetConfig()
         {
             var siteConfig = this.fileSystem.File.ReadAllText(Path.Combine(this.RootPath, "site.yml"));
             var config = YamlDeserializer.Deserialize<SiteConfiguration>(siteConfig);
@@ -192,7 +203,7 @@
             return this.mapper.Map<Site>(config);
         }
 
-        public IEnumerable<string> GetFilesIncludingSubfolders(string path)
+        private IEnumerable<string> GetFilesIncludingSubfolders(string path)
         {
             var paths = new List<string>();
 
@@ -212,29 +223,16 @@
             return paths;
         }
 
-        public int Build()
+        private void SetPaths(string rootPath, string outPath)
         {
-            this.CleanOutput();
-            this.siteConfig = this.GetConfig();
-
-            var pagesDirectory = this.GetFilesIncludingSubfolders(this.PagesInputPath);
-            foreach (var filePath in pagesDirectory)
-            {
-                var page = this.GenerateContent<Post>(filePath, "page_content", this.CalculatePageRoutes);
-                this.pages.Add(page);
-            }
-
-            var postDirectory = this.GetFilesIncludingSubfolders(this.PostsInputPath);
-            foreach (var filePath in postDirectory)
-            {
-                var post = this.GenerateContent<Post>(filePath, "post_content", this.CalculatePostRoutes);
-                this.posts.Add(post);
-            }
-
-            this.MoveStaticFiles();
-            this.WriteIndex();
-
-            return 1;
+            this.OutputPath = outPath;
+            this.RootPath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), rootPath));
+            this.PostsInputPath = Path.Combine(this.RootPath, "content", PostsPath);
+            this.PagesInputPath = Path.Combine(this.RootPath, "content", PagesPath);
+            this.StaticInputPath = Path.Combine(this.RootPath, StaticPath);
+            this.PostsOutputPath = Path.Combine(this.OutputPath, PostsPath);
+            this.PagesOutputPath = Path.Combine(this.OutputPath, PagesPath);
+            Template.FileSystem = new LockdownFileSystem(Path.Combine(this.RootPath, "templates"));
         }
 
         private T GenerateContent<T>(string filePath, string contentBlockName, Func<string, IEnumerable<string>, Tuple<string, string>> routeCalculator)

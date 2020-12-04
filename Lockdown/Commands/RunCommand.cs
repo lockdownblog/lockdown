@@ -82,7 +82,7 @@
 
             host.Run();
 
-            return 1;
+            return 0;
         }
 
         private void FileChanged(object sender, FileSystemEventArgs file)

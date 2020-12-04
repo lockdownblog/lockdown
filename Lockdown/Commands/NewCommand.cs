@@ -35,7 +35,7 @@
                 file.Write(reader.ReadToEnd());
             }
 
-            return 1;
+            return 0;
         }
     }
 }

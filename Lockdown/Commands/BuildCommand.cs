@@ -18,7 +18,7 @@
         protected override int OnExecute(CommandLineApplication app)
         {
             this.siteBuilder.Build(this.InputPath, this.OutputPath);
-            return 1;
+            return 0;
         }
     }
 }

@@ -4,7 +4,7 @@
     using global::Lockdown.Build;
     using McMaster.Extensions.CommandLineUtils;
 
-    internal class BuildCommand : CommandBase
+    internal class BuildCommand : InputOutputCommand
     {
         private Lockdown Parent { get; set; }
 

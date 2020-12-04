@@ -9,7 +9,7 @@
     using Microsoft.AspNetCore.Hosting;
     using Microsoft.Extensions.Configuration;
 
-    internal class RunCommand : CommandBase, IDisposable
+    internal class RunCommand : InputOutputCommand, IDisposable
     {
         private static readonly string[] WatchablePaths = new string[]
         {

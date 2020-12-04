@@ -12,6 +12,16 @@
     <AssemblyVersion>0.0.2</AssemblyVersion>
     <FileVersion>0.0.2</FileVersion>
     <Version>0.0.2</Version>
+    
+    <Authors>fferegrino</Authors>
+    <Title>lockdown</Title>
+    <PackageDescription>A static website generator</PackageDescription>
+    <Description>A static website generator</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/lockdownblog/lockdown/</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/lockdownblog/lockdown/</RepositoryUrl>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageTags>static;static-website;website;website-generator;html;jekyll;hugo</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
@@ -43,6 +53,9 @@
     <None Remove="BlankTemplate\content\pages\about.md" />
     <None Remove="BlankTemplate\content\posts\first-post.md" />
     <None Remove="BlankTemplate\content\posts\second-post.md" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Images\icon.png" Pack="true" PackagePath="" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="BlankTemplate\site.yml" />

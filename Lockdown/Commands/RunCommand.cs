@@ -9,6 +9,7 @@
     using Microsoft.AspNetCore.Hosting;
     using Microsoft.Extensions.Configuration;
 
+    [Command(Description = "Launch a web server running your web site")]
     internal class RunCommand : InputOutputCommand, IDisposable
     {
         private static readonly string[] WatchablePaths = new string[]
@@ -27,10 +28,10 @@
             this.siteBuilder = siteBuilder;
         }
 
-        [Option("--port")]
+        [Option("-p|--port", Description = "Specify a port where your app should run, the default is 5000")]
         public int Port { get; set; } = 5000;
 
-        [Option]
+        [Option(Description = "Set this flag if you want the changes to your source files to be incorporated in your running app")]
         public bool Watch { get; set; } = false;
 
         private Lockdown Parent { get; set; }

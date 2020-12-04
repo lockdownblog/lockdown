@@ -6,6 +6,7 @@
     using System.Reflection;
     using McMaster.Extensions.CommandLineUtils;
 
+    [Command(Description = "Create a new static website based on a template")]
     internal class NewCommand : InputOutputCommand
     {
         [Argument(0)]

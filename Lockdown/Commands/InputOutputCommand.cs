@@ -2,14 +2,14 @@
 {
     using McMaster.Extensions.CommandLineUtils;
 
-    [HelpOption("--help")]
+    [HelpOption("-h|--help")]
     public abstract class InputOutputCommand : CommandBase
     {
-        [Option("-p")]
+        [Option("-r|--root", Description = "The root path of your website")]
         [LegalFilePath]
         public string InputPath { get; set; } = "./";
 
-        [Option("-o")]
+        [Option("-o|--out", Description = "The output directory where your built website will be stored")]
         [LegalFilePath]
         public string OutputPath { get; set; } = "./_site";
 

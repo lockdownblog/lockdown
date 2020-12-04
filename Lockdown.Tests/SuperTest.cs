@@ -8,6 +8,7 @@ using AngleSharp.Dom;
 using Lockdown.Build;
 using Xunit;
 using Shouldly;
+using Lockdown.Build.Mapping;
 
 namespace Lockdown.Tests
 {
@@ -46,8 +47,8 @@ namespace Lockdown.Tests
         {
             MockFileSystem.File.Exists(Path.Combine(ExitDirectory, "index.html")).ShouldBeFalse();
 
-            var siteBuilder = new SiteBuilder(RootDirectory, ExitDirectory, MockFileSystem);
-            siteBuilder.Build();
+            var siteBuilder = new SiteBuilder(MockFileSystem, Mapper.GetMapper());
+            siteBuilder.Build(RootDirectory, ExitDirectory);
 
             var indexFile = Path.Combine(ExitDirectory, "index.html");
             MockFileSystem.File.Exists(indexFile).ShouldBeTrue();

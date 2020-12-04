@@ -27,7 +27,7 @@ build:
 	done 
 	
 build-docs:
-	dotnet run --project ./Lockdown/Lockdown.csproj -- build -p docs -o _docs
+	dotnet run --project ./Lockdown/Lockdown.csproj -- build --root docs --out _docs
 
 run-docs:
 	dotnet run --project ./Lockdown/Lockdown.csproj -- run -p docs -o _docs

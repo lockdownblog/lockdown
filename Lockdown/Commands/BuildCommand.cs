@@ -1,9 +1,9 @@
 ﻿namespace Lockdown.Commands
 {
-    using System.Collections.Generic;
     using global::Lockdown.Build;
     using McMaster.Extensions.CommandLineUtils;
 
+    [Command(Description = "Build your website")]
     internal class BuildCommand : InputOutputCommand
     {
         private readonly ISiteBuilder siteBuilder;

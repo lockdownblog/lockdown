@@ -8,11 +8,11 @@
     using McMaster.Extensions.CommandLineUtils;
     using Microsoft.Extensions.DependencyInjection;
 
-    [Command("lockdown")]
-    [VersionOptionFromMember("--version", MemberName = nameof(GetVersion))]
+    [Command("lockdown", FullName = "Lockdown", Description = "A static website generator")]
     [Subcommand(typeof(BuildCommand))]
     [Subcommand(typeof(RunCommand))]
     [Subcommand(typeof(NewCommand))]
+    [VersionOptionFromMember("--version", MemberName = nameof(GetVersion))]
     public class Lockdown : CommandBase
     {
         private readonly IConsole console;

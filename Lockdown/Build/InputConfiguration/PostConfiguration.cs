@@ -1,10 +1,10 @@
-﻿namespace Lockdown.Build
+﻿namespace Lockdown.Build.InputConfiguration
 {
     using System;
     using System.Linq;
     using YamlDotNet.Serialization;
 
-    public class PostFrontMatter
+    public class PostConfiguration
     {
         [YamlMember(Alias = "tags")]
         public string Tags { get; set; }

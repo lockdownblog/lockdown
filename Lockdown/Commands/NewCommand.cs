@@ -6,20 +6,16 @@
     using System.Reflection;
     using McMaster.Extensions.CommandLineUtils;
 
-    internal class NewCommand : CommandBase
+    internal class NewCommand : InputOutputCommand
     {
-        private string fullOutputPath;
-
         [Argument(0)]
         [Required]
-        public string BlogDir { get; }
+        public string RootDirectory { get; }
 
         private Lockdown Parent { get; set; }
 
         protected override int OnExecute(CommandLineApplication app)
         {
-            this.fullOutputPath = Path.GetFullPath(this.BlogDir);
-
             var assembly = Assembly.GetExecutingAssembly();
             var resources = assembly.GetManifestResourceNames();
 
@@ -29,8 +25,8 @@
                 var parent = string.Join("/", parts.Skip(2).SkipLast(2));
                 var filename = string.Join('.', parts.TakeLast(2));
 
-                var fullDir = Directory.CreateDirectory(Path.Combine(this.BlogDir, parent));
-                var fullPath = Path.Combine(this.BlogDir, parent, filename);
+                var fullDir = Directory.CreateDirectory(Path.Combine(this.RootDirectory, parent));
+                var fullPath = Path.Combine(this.RootDirectory, parent, filename);
 
                 using var stream = assembly.GetManifestResourceStream(resource);
                 using var reader = new StreamReader(stream);

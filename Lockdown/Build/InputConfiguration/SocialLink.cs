@@ -1,9 +1,8 @@
-﻿namespace Lockdown.Build
+﻿namespace Lockdown.Build.InputConfiguration
 {
-    using System.Collections.Generic;
     using YamlDotNet.Serialization;
 
-    public class Social
+    public class SocialLink
     {
         [YamlMember(Alias = "name")]
         public string Name { get; set; }

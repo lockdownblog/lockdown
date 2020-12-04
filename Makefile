@@ -14,11 +14,11 @@ init:
 	fi
 	./.venv/bin/pip install bump2version
 
-check_on_master:
+check_on_main:
 ifeq ($(BRANCH),main)
 	echo "You are good to go!"
 else
-	$(error You are not in the master branch)
+	$(error You are not in the main branch)
 endif
 
 build:
@@ -30,18 +30,18 @@ build-docs:
 	dotnet run --project ./Lockdown/Lockdown.csproj -- build --root docs --out _docs
 
 run-docs:
-	dotnet run --project ./Lockdown/Lockdown.csproj -- run -p docs -o _docs
+	dotnet run --project ./Lockdown/Lockdown.csproj -- run --root docs --out _docs
 
 docker:
 	docker build -t lockdownblog/lockdown:${CURRENT_VERSION} .
 
-bump_patch: check_on_master
+bump_patch: check_on_main
 	./.venv/bin/python -m bumpversion patch --verbose
 
-bump_minor: check_on_master
+bump_minor: check_on_main
 	./.venv/bin/python -m bumpversion minor --verbose
 
-bump_major: check_on_master
+bump_major: check_on_main
 	./.venv/bin/python -m bumpversion major --verbose
 
 clean:

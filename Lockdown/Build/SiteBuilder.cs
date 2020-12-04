@@ -29,7 +29,7 @@
 
         private readonly IMapper mapper;
 
-        private IFileSystem fileSystem;
+        private readonly IFileSystem fileSystem;
 
         private Site siteConfig;
 
@@ -155,8 +155,8 @@
 
                 var stream = this.fileSystem.File.OpenWrite(Path.Combine(this.OutputPath, index));
                 using var file = new StreamWriter(stream);
-                var file_text = this.fileSystem.File.ReadAllText(Path.Combine(this.RootPath, "templates", "_index.liquid"));
-                var template = Template.Parse(file_text);
+                var fileText = this.fileSystem.File.ReadAllText(Path.Combine(this.RootPath, "templates", "_index.liquid"));
+                var template = Template.Parse(fileText);
 
                 var renderVars = Hash.FromAnonymousObject(new
                 {
@@ -218,19 +218,18 @@
             this.siteConfig = this.GetConfig();
 
             var pagesDirectory = this.GetFilesIncludingSubfolders(this.PagesInputPath);
-            foreach (var file_path in pagesDirectory)
+            foreach (var filePath in pagesDirectory)
             {
-                var file_text = this.fileSystem.File.ReadAllText(file_path);
-                var file_name = Path.GetFileNameWithoutExtension(file_path);
-                var fullFileName = file_path.Substring(this.PostsInputPath.Length).TrimStart('/', ' ');
+                var fileText = this.fileSystem.File.ReadAllText(filePath);
+                var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(filePath);
                 string fileToWriteTo = null;
-                var outFileName = $"{file_name}.html";
+                var outFileName = $"{fileNameWithoutExtension}.html";
                 string url = null;
 
                 fileToWriteTo = Path.Combine(this.PagesOutputPath, outFileName);
                 url = PagesPath + "/" + outFileName;
 
-                var document = file_text.ParseMarkdown();
+                var document = fileText.ParseMarkdown();
 
                 var frontMatter = document.GetFrontMatter<PostConfiguration>();
                 frontMatter.Url = url;
@@ -265,15 +264,15 @@
             }
 
             var postDirectory = this.GetFilesIncludingSubfolders(this.PostsInputPath);
-            foreach (var file_path in postDirectory)
+            foreach (var filePath in postDirectory)
             {
-                var file_text = this.fileSystem.File.ReadAllText(file_path);
-                var file_name = Path.GetFileNameWithoutExtension(file_path);
-                var fullFileName = file_path.Substring(this.PostsInputPath.Length).TrimStart('/', ' ');
+                var fileText = this.fileSystem.File.ReadAllText(filePath);
+                var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(filePath);
+                var fullFileName = filePath.Substring(this.PostsInputPath.Length).TrimStart('/', ' ');
                 var parts = fullFileName.Split('/', StringSplitOptions.RemoveEmptyEntries).SkipLast(1);
                 string newFileDirectory = Path.Combine(parts.ToArray());
                 string fileToWriteTo = null;
-                var outFileName = string.IsNullOrWhiteSpace(newFileDirectory) ? $"{file_name}.html" : Path.Combine(newFileDirectory, $"{file_name}.html");
+                var outFileName = string.IsNullOrWhiteSpace(newFileDirectory) ? $"{fileNameWithoutExtension}.html" : Path.Combine(newFileDirectory, $"{fileNameWithoutExtension}.html");
                 string url = null;
 
                 if (parts.Any())
@@ -293,7 +292,7 @@
                     url = PostsPath + "/" + outFileName;
                 }
 
-                var document = file_text.ParseMarkdown();
+                var document = fileText.ParseMarkdown();
 
                 var frontMatter = document.GetFrontMatter<PostConfiguration>();
                 frontMatter.Url = url;

@@ -17,6 +17,7 @@
     {
         private const string PostsPath = "posts";
         private const string PagesPath = "pages";
+        private const string TagsPath = "tags";
         private const string StaticPath = "static";
 
         private static readonly IDeserializer YamlDeserializer = new DeserializerBuilder()
@@ -25,7 +26,9 @@
 
         private readonly List<Post> posts;
 
-        private readonly List<Post> pages;
+        private readonly List<Page> pages;
+
+        private readonly Dictionary<string, List<Content>> tags;
 
         private readonly IMapper mapper;
 
@@ -37,7 +40,8 @@
         {
             this.fileSystem = fileSystem;
             this.posts = new List<Post>();
-            this.pages = new List<Post>();
+            this.pages = new List<Page>();
+            this.tags = new Dictionary<string, List<Content>>();
             this.mapper = mapper;
         }
 
@@ -83,6 +87,12 @@
             private set;
         }
 
+        public string TagsOutputPath
+        {
+            get;
+            private set;
+        }
+
         public void Build(string rootPath, string outPath)
         {
             this.SetPaths(rootPath, outPath);
@@ -92,7 +102,15 @@
             var pagesDirectory = this.GetFilesIncludingSubfolders(this.PagesInputPath);
             foreach (var filePath in pagesDirectory)
             {
-                var page = this.GenerateContent<Post>(filePath, "page_content", this.CalculatePageRoutes);
+                var page = this.GenerateContent<Page>(filePath, "page_content", this.CalculatePageRoutes);
+                if (this.siteConfig.PagesInTags)
+                {
+                    foreach (string tag in page.Tags)
+                    {
+                        this.tags.AddDefault(tag, page);
+                    }
+                }
+
                 this.pages.Add(page);
             }
 
@@ -100,10 +118,17 @@
             foreach (var filePath in postDirectory)
             {
                 var post = this.GenerateContent<Post>(filePath, "post_content", this.CalculatePostRoutes);
+
+                foreach (string tag in post.Tags)
+                {
+                    this.tags.AddDefault(tag, post);
+                }
+
                 this.posts.Add(post);
             }
 
             this.MoveStaticFiles();
+            this.WriteTags();
             this.WriteIndex();
         }
 
@@ -128,6 +153,7 @@
             }
 
             this.fileSystem.Directory.CreateDirectory(this.OutputPath);
+            this.fileSystem.Directory.CreateDirectory(this.TagsOutputPath);
             this.fileSystem.Directory.CreateDirectory(this.PostsOutputPath);
             this.fileSystem.Directory.CreateDirectory(this.PagesOutputPath);
         }
@@ -182,6 +208,41 @@
             }
         }
 
+        private void WriteTags()
+        {
+            var fileTagsIndex = this.fileSystem.File.ReadAllText(Path.Combine(this.RootPath, "templates", "_tag_index.liquid"));
+            var fielTagsPage = this.fileSystem.File.ReadAllText(Path.Combine(this.RootPath, "templates", "_tag_page.liquid"));
+            var tagsIndexTemplate = Template.Parse(fileTagsIndex);
+            var tagsPageTemplate = Template.Parse(fielTagsPage);
+
+            var tagIndexContent = new List<Link>();
+
+            foreach (var thing in this.tags)
+            {
+                var tagUrl = Path.Combine("tags", $"{thing.Key}.html");
+                var tagPage = this.fileSystem.File.OpenWrite(Path.Combine(this.OutputPath, tagUrl));
+                using var tagPageFileStreamWriter = new StreamWriter(tagPage);
+                var tagPageRendered = tagsIndexTemplate.Render(Hash.FromAnonymousObject(new
+                {
+                    site = this.siteConfig,
+                    content = thing.Value,
+                }));
+                tagPageFileStreamWriter.Write(tagPageRendered);
+                tagIndexContent.Add(new Link { Text = thing.Key, Url = tagUrl.Replace('\\', '/') });
+            }
+
+            var renderVars = Hash.FromAnonymousObject(new
+            {
+                site = this.siteConfig,
+                tags = tagIndexContent,
+            });
+
+            var stream = this.fileSystem.File.OpenWrite(Path.Combine(this.OutputPath, "tags.html"));
+            using var file = new StreamWriter(stream);
+            var rendered = tagsIndexTemplate.Render(renderVars);
+            file.Write(rendered);
+        }
+
         private void MoveStaticFiles()
         {
             foreach (string dirPath in Directory.GetDirectories(this.StaticInputPath, "*", SearchOption.AllDirectories))
@@ -229,14 +290,16 @@
             this.RootPath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), rootPath));
             this.PostsInputPath = Path.Combine(this.RootPath, "content", PostsPath);
             this.PagesInputPath = Path.Combine(this.RootPath, "content", PagesPath);
+            this.PagesInputPath = Path.Combine(this.RootPath, "content", PagesPath);
             this.StaticInputPath = Path.Combine(this.RootPath, StaticPath);
             this.PostsOutputPath = Path.Combine(this.OutputPath, PostsPath);
             this.PagesOutputPath = Path.Combine(this.OutputPath, PagesPath);
+            this.TagsOutputPath = Path.Combine(this.OutputPath, TagsPath);
             Template.FileSystem = new LockdownFileSystem(Path.Combine(this.RootPath, "templates"));
         }
 
         private T GenerateContent<T>(string filePath, string contentBlockName, Func<string, IEnumerable<string>, Tuple<string, string>> routeCalculator)
-            where T : Post
+            where T : Content
         {
             var fileText = this.fileSystem.File.ReadAllText(filePath);
             var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(filePath);

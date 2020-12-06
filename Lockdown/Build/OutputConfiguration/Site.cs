@@ -11,6 +11,8 @@ namespace Lockdown.Build.OutputConfiguration
 
         public string DefaultAuthor { get; set; }
 
+        public bool PagesInTags { get; set; }
+
         public List<SocialLink> Social { get; set; }
     }
 }

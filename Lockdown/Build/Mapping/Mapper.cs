@@ -18,6 +18,13 @@
                         opt => opt.MapFrom(
                             orig => orig.DateTime.GetValueOrDefault(orig.Date.GetValueOrDefault(DateTime.Now))));
 
+                cfg.CreateMap<InputConfiguration.PostConfiguration, OutputConfiguration.Page>()
+                    .ForMember(dest => dest.Context, opt => opt.Ignore())
+                    .ForMember(
+                        dest => dest.DateTime,
+                        opt => opt.MapFrom(
+                            orig => orig.DateTime.GetValueOrDefault(orig.Date.GetValueOrDefault(DateTime.Now))));
+
                 cfg.CreateMap<InputConfiguration.SocialLink, OutputConfiguration.SocialLink>()
                     .ForMember(dest => dest.Context, opt => opt.Ignore());
 

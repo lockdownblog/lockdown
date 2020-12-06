@@ -46,12 +46,9 @@
         public string[] RedirectFrom { get; set; }
 
         [YamlIgnore]
-        public string Url { get; set; }
-
-        [YamlIgnore]
         public string[] GetTags => this.Tags?
             .Split(",", StringSplitOptions.RemoveEmptyEntries)
             .Select(x => x.Trim())
-            .ToArray();
+            .ToArray() ?? new string[0];
     }
 }

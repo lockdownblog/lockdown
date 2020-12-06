@@ -3,6 +3,7 @@ layout: post
 title: "My first post!"
 summary: "This is my first Lockdown post"
 datetime: 2020-12-29 12:00
+tags: lockdown
 ---
 
 ## Hello world!

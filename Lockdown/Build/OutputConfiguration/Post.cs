@@ -10,7 +10,5 @@
         public string YoutubeId { get; set; }
 
         public string[] RedirectFrom { get; set; }
-
-        public string Url { get; set; }
     }
 }

@@ -12,8 +12,11 @@
             }
             else
             {
-                var coll = new List<T>();
-                content.Add(key, coll);
+                var newCollection = new List<T>
+                {
+                    element,
+                };
+                content.Add(key, newCollection);
             }
         }
     }

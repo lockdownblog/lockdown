@@ -9,6 +9,7 @@ using Lockdown.Build;
 using Xunit;
 using Shouldly;
 using Lockdown.Build.Mapping;
+using System.IO.Abstractions;
 
 namespace Lockdown.Tests
 {
@@ -19,7 +20,7 @@ namespace Lockdown.Tests
     {
         readonly string RootDirectory;
         readonly string ExitDirectory;
-        readonly MockFileSystem MockFileSystem;
+        readonly IFileSystem MockFileSystem;
 
         public SuperTest()
         {
@@ -34,6 +35,8 @@ namespace Lockdown.Tests
             }
 
             MockFileSystem = new MockFileSystem(dictionary);
+
+
         }
 
         private async Task<IDocument> OpenDocument(string path)
@@ -74,6 +77,18 @@ namespace Lockdown.Tests
             var page = await OpenDocument(pageFile);
             var pageTitle = page.All.First(node => node.LocalName == "h1");
             pageTitle.TextContent.ShouldBe("About");
+
+            var tagseFile = Path.Combine(ExitDirectory, "tags.html");
+            MockFileSystem.File.Exists(tagseFile).ShouldBeTrue();
+            var tagsPage = await OpenDocument(tagseFile);
+            var tags = tagsPage.All.Where(node => node.LocalName == "li").Select(tag => tag.TextContent).ToArray();
+            tags.ShouldBe(new string[] { "lockdown", "blog" });
+
+            var lockdownTagsFile = Path.Combine(ExitDirectory, "tags", "lockdown.html");
+            MockFileSystem.File.Exists(Path.Combine(ExitDirectory, "tags", "lockdown.html")).ShouldBeTrue();
+            var lockdownPostsPage = await OpenDocument(lockdownTagsFile);
+            var pageTitles = lockdownPostsPage.All.Where(node => node.LocalName == "h1" && node.ClassName == "title").Select(h1 => h1.TextContent).ToArray();
+            pageTitles.ShouldBe(new string[] { "My first post!", "My second post!" });
         }
     }
 }

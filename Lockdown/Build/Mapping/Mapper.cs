@@ -11,8 +11,21 @@
             {
                 cfg.CreateMap<InputConfiguration.PostConfiguration, OutputConfiguration.Post>()
                     .ForMember(dest => dest.Context, opt => opt.Ignore())
+                    .ForMember(dest => dest.Url, opt => opt.Ignore())
+                    .ForMember(dest => dest.TagsAsStrings, opt => opt.MapFrom(orig => orig.GetTags))
+                    .ForMember(dest => dest.Tags, opt => opt.Ignore())
                     .ForMember(dest => dest.YoutubeId, opt => opt.MapFrom(
                         orig => orig.YouTubeID))
+                    .ForMember(
+                        dest => dest.DateTime,
+                        opt => opt.MapFrom(
+                            orig => orig.DateTime.GetValueOrDefault(orig.Date.GetValueOrDefault(DateTime.Now))));
+
+                cfg.CreateMap<InputConfiguration.PostConfiguration, OutputConfiguration.Page>()
+                    .ForMember(dest => dest.Context, opt => opt.Ignore())
+                    .ForMember(dest => dest.Url, opt => opt.Ignore())
+                    .ForMember(dest => dest.TagsAsStrings, opt => opt.MapFrom(orig => orig.GetTags))
+                    .ForMember(dest => dest.Tags, opt => opt.Ignore())
                     .ForMember(
                         dest => dest.DateTime,
                         opt => opt.MapFrom(

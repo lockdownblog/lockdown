@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "What is lockdown?"
-tags: dotnet
+tags: dotnet, csharp
 image: /assets/images/posts/misc/parse-frontmatter.jpg
 image_credit_name: Ben Sweet
 image_credit_url: https://unsplash.com/@benjaminsweet

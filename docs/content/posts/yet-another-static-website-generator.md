@@ -1,5 +1,6 @@
 ---
 layout: post
+tags: dotnet, blogging
 title: Yet another static website generator
 summary: "Lockdown is yet another static website generator, like many others but this one is made in C#"
 datetime: 2019-11-05 17:11

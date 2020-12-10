@@ -204,8 +204,16 @@
 
         private void WriteTags()
         {
-            var fileTagsIndex = this.fileSystem.File.ReadAllText(Path.Combine(this.rootPath, "templates", "_tag_index.liquid"));
-            var fielTagsPage = this.fileSystem.File.ReadAllText(Path.Combine(this.rootPath, "templates", "_tag_page.liquid"));
+            var tagIndexFile = Path.Combine(this.rootPath, "templates", "_tag_index.liquid");
+            var tagPageFile = Path.Combine(this.rootPath, "templates", "_tag_page.liquid");
+
+            if (!this.fileSystem.File.Exists(tagIndexFile) && !this.fileSystem.File.Exists(tagPageFile))
+            {
+                return;
+            }
+
+            var fileTagsIndex = this.fileSystem.File.ReadAllText(tagIndexFile);
+            var fielTagsPage = this.fileSystem.File.ReadAllText(tagPageFile);
             var tagsIndexTemplate = Template.Parse(fileTagsIndex);
             var tagsPageTemplate = Template.Parse(fielTagsPage);
 

@@ -13,6 +13,10 @@ namespace Lockdown.Build.OutputConfiguration
 
         public bool PagesInTags { get; set; }
 
+        public string Description { get; set; }
+
+        public string SiteUrl { get; set; }
+
         public List<SocialLink> Social { get; set; }
     }
 }

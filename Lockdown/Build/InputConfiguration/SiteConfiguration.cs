@@ -11,6 +11,12 @@ namespace Lockdown.Build.InputConfiguration
         [YamlMember(Alias = "subtitle")]
         public string Subtitle { get; set; }
 
+        [YamlMember(Alias = "description")]
+        public string Description { get; set; }
+
+        [YamlMember(Alias = "site-url")]
+        public string SiteUrl { get; set; }
+
         [YamlMember(Alias = "default-author")]
         public string DefaultAuthor { get; set; }
 

@@ -35,7 +35,10 @@
                     .ForMember(dest => dest.Context, opt => opt.Ignore());
 
                 cfg.CreateMap<InputConfiguration.SiteConfiguration, OutputConfiguration.Site>()
-                    .ForMember(dest => dest.Context, opt => opt.Ignore());
+                    .ForMember(dest => dest.Context, opt => opt.Ignore())
+                    .ForMember(dest => dest.SiteUrl, opt => opt.MapFrom(
+                        orig => string.IsNullOrEmpty(orig.SiteUrl) ? "" : orig.SiteUrl.TrimEnd('/')
+                    ));
             });
 
             configuration.AssertConfigurationIsValid();

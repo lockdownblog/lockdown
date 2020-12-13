@@ -13,8 +13,6 @@
     using Markdig.Renderers;
     using YamlDotNet.Serialization;
 
-    
-
     public class SiteBuilder : ISiteBuilder
     {
         private const string PostsPath = "posts";
@@ -220,7 +218,7 @@
             foreach (var thing in this.tags)
             {
                 var (tagPage, tagUrl) = this.tagLinks[thing.Key];
-                using var specificTagFileStream = this.fileSystem.File.OpenWrite(Path.Combine(this.outputPath, tagPage));
+                using var specificTagFileStream = this.fileSystem.File.OpenWrite(tagPage);
                 using var tagPageFileStreamWriter = new StreamWriter(specificTagFileStream);
                 var tagPageRendered = tagsPageTemplate.Render(Hash.FromAnonymousObject(new
                 {

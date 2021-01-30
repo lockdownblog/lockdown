@@ -38,7 +38,8 @@
                 ? Path.Combine(Path.Combine(this.Root, Path.GetDirectoryName(templatePath)), string.Format("_{0}.liquid", Path.GetFileName(templatePath)))
                 : Path.Combine(this.Root, string.Format("_{0}.liquid", templatePath));
 
-            string escapedPath = Regex.Escape(this.Root);
+            string escapedPath = Regex.Escape(this.Root).Replace("\\.", ".");
+            fullPath = fullPath.Replace("\\.", ".");
 
             if (!fullPath.StartsWith(escapedPath))
             {

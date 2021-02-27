@@ -4,7 +4,7 @@
 
     public class Link
     {
-        [YamlMember(Alias = "name")]
+        [YamlMember(Alias = "text")]
         public string Text { get; set; }
 
         [YamlMember(Alias = "url")]

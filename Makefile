@@ -27,10 +27,10 @@ build:
 	done 
 	
 build-docs:
-	dotnet run --project ./Lockdown/Lockdown.csproj -- build --root docs --out _docs
+	dotnet run --project ./Lockdown/Lockdown.csproj -- build --root docs --output _docs
 
 run-docs:
-	dotnet run --project ./Lockdown/Lockdown.csproj -- run --root docs --out _docs
+	dotnet run --project ./Lockdown/Lockdown.csproj -- run --root docs --output _docs
 
 docker:
 	docker build -t lockdownblog/lockdown:${CURRENT_VERSION} .

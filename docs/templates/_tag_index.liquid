@@ -5,7 +5,7 @@
 <div class="tag-cloud">
     <ul class="tags">
         {% for tag in tags %}
-        <li><a href="{{ tag.url }}">{{ tag.text }}</a></li>
+        <li><a href="{{ tag.canonical_url }}">{{ tag.text }}</a></li>
         {% endfor %}
     </ul>
 </div>

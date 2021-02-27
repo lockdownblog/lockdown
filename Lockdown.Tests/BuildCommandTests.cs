@@ -1,7 +1,7 @@
 using Lockdown.Commands;
 using System;
 using Xunit;
-using Lockdown.Test.Utils;
+using Lockdown.Tests.Utils;
 using Shouldly;
 using Moq;
 using Lockdown.Build;

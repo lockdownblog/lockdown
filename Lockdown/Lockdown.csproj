@@ -4,15 +4,14 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net5.0</TargetFramework>
     <RuntimeIdentifiers>win-x64;linux-x64;linux-arm;osx-x64</RuntimeIdentifiers>
-    
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>lockdown</ToolCommandName>
     <PackageOutputPath>./nupkg</PackageOutputPath>
 
+    <PackageId>Lockdown</PackageId>
     <AssemblyVersion>0.0.5</AssemblyVersion>
-    <FileVersion>0.0.5</FileVersion>
     <Version>0.0.5</Version>
-    
+
     <Authors>fferegrino</Authors>
     <Title>lockdown</Title>
     <PackageDescription>A static website generator</PackageDescription>
@@ -25,55 +24,27 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="McMaster.Extensions.CommandLineUtils" Version="3.0.0" />
-    <PackageReference Include="DotLiquid" Version="2.0.366" />
-    <PackageReference Include="Markdig" Version="0.22.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Hosting.Abstractions" Version="2.2.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Server.Kestrel" Version="2.2.*" />
-    <PackageReference Include="Microsoft.AspNetCore.StaticFiles" Version="2.2.*" />
-    <PackageReference Include="StyleCop.Analyzers" Version="1.1.118">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="System.IO.Abstractions" Version="13.2.2" />
-    <PackageReference Include="YamlDotNet" Version="9.1.0" />
     <PackageReference Include="AutoMapper" Version="10.1.1" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Remove="BlankTemplate\site.yml" />
-    <None Remove="BlankTemplate\templates\_index.liquid" />
-    <None Remove="BlankTemplate\templates\_base.liquid" />
-    <None Remove="BlankTemplate\templates\_header.liquid" />
-    <None Remove="BlankTemplate\templates\_footer.liquid" />
-    <None Remove="BlankTemplate\templates\_post.liquid" />
-    <None Remove="BlankTemplate\templates\_page.liquid" />
-    <None Remove="BlankTemplate\templates\_head.liquid" />
-    <None Remove="BlankTemplate\static\css\main.css" />
-    <None Remove="BlankTemplate\content\pages\about.md" />
-    <None Remove="BlankTemplate\content\posts\first-post.md" />
-    <None Remove="BlankTemplate\content\posts\second-post.md" />
+    <PackageReference Include="DotLiquid" Version="2.0.366" />
+    <PackageReference Include="Markdig" Version="0.23.0" />
+    <PackageReference Include="McMaster.Extensions.CommandLineUtils" Version="3.1.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Hosting.Abstractions" Version="2.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Server.Kestrel" Version="2.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.StaticFiles" Version="2.2.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="5.0.1" />
+    <PackageReference Include="Slugify.Core" Version="3.0.0" />
+    <PackageReference Include="StyleCop.Analyzers" Version="1.1.118">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="System.IO.Abstractions" Version="13.2.9" />
+    <PackageReference Include="YamlDotNet" Version="9.1.4" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Images\icon.png" Pack="true" PackagePath="" />
   </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="BlankTemplate\site.yml" />
-    <EmbeddedResource Include="BlankTemplate\templates\_index.liquid" />
-    <EmbeddedResource Include="BlankTemplate\templates\_base.liquid" />
-    <EmbeddedResource Include="BlankTemplate\templates\_header.liquid" />
-    <EmbeddedResource Include="BlankTemplate\templates\_footer.liquid" />
-    <EmbeddedResource Include="BlankTemplate\templates\_post.liquid" />
-    <EmbeddedResource Include="BlankTemplate\templates\_page.liquid" />
-    <EmbeddedResource Include="BlankTemplate\templates\_head.liquid" />
-    <EmbeddedResource Include="BlankTemplate\static\css\main.css" />
-    <EmbeddedResource Include="BlankTemplate\content\pages\about.md" />
-    <EmbeddedResource Include="BlankTemplate\content\posts\first-post.md" />
-    <EmbeddedResource Include="BlankTemplate\content\posts\second-post.md" />
-  </ItemGroup>
-
   <PropertyGroup>
-    <CodeAnalysisRuleSet>../Style.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRuleSet>../style.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
 
 </Project>

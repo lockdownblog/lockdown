@@ -1,4 +1,4 @@
-namespace Lockdown.Run
+﻿namespace Lockdown.Run
 {
     using Microsoft.AspNetCore.Builder;
     using Microsoft.Extensions.Configuration;

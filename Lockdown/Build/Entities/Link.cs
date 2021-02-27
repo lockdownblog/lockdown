@@ -1,4 +1,4 @@
-﻿namespace Lockdown.Build.OutputConfiguration
+﻿namespace Lockdown.Build.Entities
 {
     using DotLiquid;
 

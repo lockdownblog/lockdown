@@ -2,6 +2,8 @@
 {
     using System;
     using AutoMapper;
+    using Lockdown.Build.Entities;
+    using Raw = Lockdown.Build.RawEntities;
 
     public static class Mapper
     {
@@ -9,35 +11,21 @@
         {
             var configuration = new MapperConfiguration(cfg =>
             {
-                cfg.CreateMap<InputConfiguration.PostConfiguration, OutputConfiguration.Post>()
+                cfg.CreateMap<Raw.PostMetadata, PostMetadata>()
                     .ForMember(dest => dest.Context, opt => opt.Ignore())
-                    .ForMember(dest => dest.Url, opt => opt.Ignore())
-                    .ForMember(dest => dest.TagsAsStrings, opt => opt.MapFrom(orig => orig.GetTags))
-                    .ForMember(dest => dest.Tags, opt => opt.Ignore())
-                    .ForMember(dest => dest.YoutubeId, opt => opt.MapFrom(
-                        orig => orig.YouTubeID))
-                    .ForMember(
-                        dest => dest.DateTime,
-                        opt => opt.MapFrom(
-                            orig => orig.DateTime.GetValueOrDefault(orig.Date.GetValueOrDefault(DateTime.Now))));
-
-                cfg.CreateMap<InputConfiguration.PostConfiguration, OutputConfiguration.Page>()
-                    .ForMember(dest => dest.Context, opt => opt.Ignore())
-                    .ForMember(dest => dest.Url, opt => opt.Ignore())
-                    .ForMember(dest => dest.TagsAsStrings, opt => opt.MapFrom(orig => orig.GetTags))
+                    .ForMember(dest => dest.CanonicalUrl, opt => opt.Ignore())
                     .ForMember(dest => dest.Tags, opt => opt.Ignore())
                     .ForMember(
-                        dest => dest.DateTime,
+                        dest => dest.Date,
                         opt => opt.MapFrom(
-                            orig => orig.DateTime.GetValueOrDefault(orig.Date.GetValueOrDefault(DateTime.Now))));
+                            orig => orig.Date.GetValueOrDefault(
+                                orig.Date.GetValueOrDefault(DateTime.Now))));
 
-                cfg.CreateMap<InputConfiguration.SocialLink, OutputConfiguration.SocialLink>()
+                cfg.CreateMap<Raw.SiteConfiguration, SiteConfiguration>()
                     .ForMember(dest => dest.Context, opt => opt.Ignore());
 
-                cfg.CreateMap<InputConfiguration.SiteConfiguration, OutputConfiguration.Site>()
-                    .ForMember(dest => dest.Context, opt => opt.Ignore())
-                    .ForMember(dest => dest.SiteUrl, opt => opt.MapFrom(
-                        orig => string.IsNullOrEmpty(orig.SiteUrl) ? string.Empty : orig.SiteUrl.TrimEnd('/')));
+                cfg.CreateMap<Raw.Link, Link>()
+                    .ForMember(dest => dest.Context, opt => opt.Ignore());
             });
 
             configuration.AssertConfigurationIsValid();

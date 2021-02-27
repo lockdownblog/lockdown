@@ -1,4 +1,4 @@
-namespace Lockdown.Build.InputConfiguration
+﻿namespace Lockdown.Build.RawEntities
 {
     using System.Collections.Generic;
     using YamlDotNet.Serialization;
@@ -24,6 +24,15 @@ namespace Lockdown.Build.InputConfiguration
         public bool PagesInTags { get; set; }
 
         [YamlMember(Alias = "social")]
-        public List<SocialLink> Social { get; set; }
+        public List<Link> Social { get; set; }
+
+        [YamlMember(Alias = "post-routes")]
+        public List<string> PostRoutes { get; set; }
+
+        [YamlMember(Alias = "tag-index-route")]
+        public string TagIndexRoute { get; set; }
+
+        [YamlMember(Alias = "tag-page-route")]
+        public string TagPageRoute { get; set; }
     }
 }

@@ -1,9 +1,9 @@
-namespace Lockdown.Build.OutputConfiguration
+﻿namespace Lockdown.Build.Entities
 {
     using System.Collections.Generic;
     using DotLiquid;
 
-    public class Site : Drop
+    public class SiteConfiguration : Drop
     {
         public string Title { get; set; }
 
@@ -17,6 +17,12 @@ namespace Lockdown.Build.OutputConfiguration
 
         public string SiteUrl { get; set; }
 
-        public List<SocialLink> Social { get; set; }
+        public List<Link> Social { get; set; }
+
+        public List<string> PostRoutes { get; set; }
+
+        public string TagIndexRoute { get; set; }
+
+        public string TagPageRoute { get; set; }
     }
 }

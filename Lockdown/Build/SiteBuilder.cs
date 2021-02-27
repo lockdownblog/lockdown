@@ -5,126 +5,103 @@
     using System.IO;
     using System.IO.Abstractions;
     using System.Linq;
+    using System.Text;
     using AutoMapper;
-    using DotLiquid;
-    using global::Lockdown.Build.InputConfiguration;
-    using global::Lockdown.Build.OutputConfiguration;
-    using global::Lockdown.Build.Utils;
-    using Markdig.Renderers;
-    using YamlDotNet.Serialization;
+    using Lockdown.Build.Entities;
+    using Lockdown.Build.Markdown;
+    using Lockdown.Build.Utils;
+    using Raw = Lockdown.Build.RawEntities;
 
     public class SiteBuilder : ISiteBuilder
     {
-        private const string PostsPath = "posts";
-        private const string PagesPath = "pages";
-        private const string TagsPath = "tags";
-        private const string StaticPath = "static";
-
-        private static readonly IDeserializer YamlDeserializer = new DeserializerBuilder()
-            .IgnoreUnmatchedProperties()
-            .Build();
-
-        private readonly List<Tuple<Post, string, string>> posts;
-
-        private readonly List<Tuple<Page, string, string>> pages;
-
-        private readonly Dictionary<string, List<Content>> tags;
-
-        private readonly Dictionary<string, Tuple<string, string>> tagLinks;
-
-        private readonly IMapper mapper;
-
         private readonly IFileSystem fileSystem;
+        private readonly IYamlParser yamlParser;
+        private readonly IMarkdownRenderer markdownRenderer;
+        private readonly ILiquidRenderer liquidRenderer;
+        private readonly ISlugifier slugifier;
+        private readonly IMapper mapper;
+        private SiteConfiguration siteConfiguration;
 
-        private Site siteConfig;
-
-        private string rootPath;
-
-        private string outputPath;
-
-        private string postsInputPath;
-
-        private string pagesInputPath;
-
-        private string staticInputPath;
-
-        private string postsOutputPath;
-
-        private string pagesOutputPath;
-
-        private string tagsOutputPath;
-
-        public SiteBuilder(IFileSystem fileSystem, IMapper mapper)
+        public SiteBuilder(
+            IFileSystem fileSystem,
+            IYamlParser yamlParser,
+            IMarkdownRenderer markdownRenderer,
+            ILiquidRenderer liquidRenderer,
+            ISlugifier slugifier,
+            IMapper mapper)
         {
             this.fileSystem = fileSystem;
-            this.posts = new List<Tuple<Post, string, string>>();
-            this.pages = new List<Tuple<Page, string, string>>();
-            this.tags = new Dictionary<string, List<Content>>();
-            this.tagLinks = new Dictionary<string, Tuple<string, string>>();
+            this.yamlParser = yamlParser;
+            this.markdownRenderer = markdownRenderer;
+            this.liquidRenderer = liquidRenderer;
+            this.slugifier = slugifier;
             this.mapper = mapper;
+            this.siteConfiguration = null;
         }
 
-        public void Build(string rootPath, string outPath)
+        public virtual void CleanFolder(string folder)
         {
-            this.SetPaths(rootPath, outPath);
-            this.CleanOutput();
-            this.siteConfig = this.GetConfig();
-
-            var pagesDirectory = this.GetFilesIncludingSubfolders(this.pagesInputPath);
-            foreach (var filePath in pagesDirectory)
+            if (this.fileSystem.Directory.Exists(folder))
             {
-                var (page, textContent) = this.GenerateContent<Page>(filePath, "page_content");
-                var (fileToWriteTo, url) = this.CalculatePageRoutes(filePath);
-                page.Url = url;
-                if (this.siteConfig.PagesInTags)
-                {
-                    foreach (var tag in page.TagsAsStrings)
-                    {
-                        this.tags.AddDefault(tag, page);
-                    }
-                }
-
-                this.pages.Add(Tuple.Create(page, fileToWriteTo, textContent));
+                this.fileSystem.Directory.Delete(folder, recursive: true);
             }
 
-            var postDirectory = this.GetFilesIncludingSubfolders(this.postsInputPath);
-            foreach (var filePath in postDirectory)
-            {
-                var (post, textContent) = this.GenerateContent<Post>(filePath, "post_content");
-                var (fileToWriteTo, url) = this.CalculatePostRoutes(filePath);
-                post.Url = url;
-                foreach (var tag in post.TagsAsStrings)
-                {
-                    this.tags.AddDefault(tag, post);
-                }
-
-                this.posts.Add(Tuple.Create(post, fileToWriteTo, textContent));
-            }
-
-            foreach (var tag in this.tags.Keys)
-            {
-                this.tagLinks.Add(tag, this.CalculateTagRoutes(tag));
-            }
-
-            // Fill tags in posts
-            foreach (var (post, fileToWriteTo, textContent) in this.posts)
-            {
-                post.Tags = post.TagsAsStrings.Select(tag => new Link { Text = tag, Url = this.tagLinks[tag].Item2 });
-                this.WriteContent(fileToWriteTo, textContent, post);
-            }
-
-            foreach (var (page, fileToWriteTo, textContent) in this.pages)
-            {
-                page.Tags = page.TagsAsStrings.Select(tag => new Link { Text = tag, Url = this.tagLinks[tag].Item2 });
-                this.WriteContent(fileToWriteTo, textContent, page);
-            }
-
-            this.MoveStaticFiles();
-            this.WriteTags();
-            this.WriteIndex();
+            this.fileSystem.Directory.CreateDirectory(folder);
         }
 
-        private static List<List<T>> SplitList<T>(List<T> values, int size = 30)
+        public void Build(string inputPath, string outputPath)
+        {
+            var staticPath = this.fileSystem.Path.Combine(inputPath, "static");
+            this.CleanFolder(outputPath);
+            this.CopyFiles(staticPath, outputPath);
+            this.liquidRenderer.SetRoot(inputPath);
+
+            var rawSiteConfiguration = this.ReadSiteConfiguration(inputPath);
+            this.siteConfiguration = this.mapper.Map<SiteConfiguration>(rawSiteConfiguration);
+
+            var postMetadata = new List<(PostMetadata metadata, string content)>();
+
+            var tagPosts = new Dictionary<string, (string urlPath, List<PostMetadata> metadatas)>();
+            var tagCanonicalUrl = new Dictionary<string, Link>();
+
+            var rawPosts = this.GetPosts(inputPath).ToList();
+
+            foreach (var rawPost in rawPosts)
+            {
+                var (rawMetadata, rawContent) = this.SplitPost(rawPost);
+                var metadatos = this.ConvertMetadata(rawMetadata);
+
+                var mainRoute = rawSiteConfiguration.PostRoutes.First();
+                (string _, string canonicalPath) = this.GetPostPaths(mainRoute, metadatos);
+                metadatos.CanonicalUrl = canonicalPath;
+
+                foreach (var tag in metadatos.TagArray)
+                {
+                    if (!tagPosts.ContainsKey(tag))
+                    {
+                        var (tagOutputPath, canonicalUrl) = this.GetPaths(this.siteConfiguration.TagPageRoute, tag);
+                        tagCanonicalUrl[tag] = new Link { Url = canonicalUrl, Text = tag };
+                        tagPosts[tag] = (tagOutputPath, new List<PostMetadata>());
+                    }
+
+                    tagPosts[tag].metadatas.Add(metadatos);
+                }
+
+                metadatos.Tags = metadatos.TagArray.Select(tag => tagCanonicalUrl[tag]).ToArray();
+
+                postMetadata.Add((metadatos, rawContent));
+            }
+
+            this.WriteTags(inputPath, outputPath, tagPosts);
+
+            this.WriteTagIndex(inputPath, outputPath, tagCanonicalUrl.Values);
+
+            this.WritePosts(inputPath, outputPath, rawSiteConfiguration, postMetadata);
+
+            this.WriteIndex(postMetadata.Select(element => element.metadata), inputPath, outputPath);
+        }
+
+        public virtual List<List<T>> SplitChunks<T>(List<T> values, int size = 30)
         {
             List<List<T>> list = new List<List<T>>();
             for (int i = 0; i < values.Count; i += size)
@@ -137,256 +114,241 @@
             return list;
         }
 
-        private void CleanOutput()
+        public virtual void WritePosts(string inputPath, string outputPath, Raw.SiteConfiguration rawSiteConfiguration, List<(PostMetadata metadata, string content)> postMetadata)
         {
-            if (this.fileSystem.Directory.Exists(this.outputPath))
+            foreach (var (metadatos, content) in postMetadata)
             {
-                this.fileSystem.Directory.Delete(this.outputPath, recursive: true);
-            }
+                var renderedPost = this.RenderContent(metadatos, content, inputPath);
 
-            this.fileSystem.Directory.CreateDirectory(this.outputPath);
-            this.fileSystem.Directory.CreateDirectory(this.tagsOutputPath);
-            this.fileSystem.Directory.CreateDirectory(this.postsOutputPath);
-            this.fileSystem.Directory.CreateDirectory(this.pagesOutputPath);
-        }
-
-        private void WriteIndex()
-        {
-            var orderedPosts = this.posts.Select(element => element.Item1).OrderBy(post => post.DateTime).Reverse().ToList();
-            var splits = SplitList(orderedPosts, size: 10);
-
-            for (int i = 0; i < splits.Count; i++)
-            {
-                var first = i == 0;
-                var last = i == splits.Count - 1;
-                var currentPage = i + 1;
-
-                var index = first ? "index.html" : $"index-{i}.html";
-                var previousIndex = $"index-{i - 1}.html";
-                var nextIndex = $"index-{i + 1}.html";
-                if (i - 1 == 0)
+                foreach (var tag in metadatos.TagArray)
                 {
-                    previousIndex = "index.html";
+                    var (_, canonicalTag) = this.GetPaths(this.siteConfiguration.TagIndexRoute, tag);
                 }
 
-                var paginator = new Paginator()
+                foreach (string pathTemplate in rawSiteConfiguration.PostRoutes)
                 {
-                    PageCount = splits.Count,
-                    CurrentPage = currentPage,
-                    HasNextPage = !last,
-                    HasPreviousPage = !first,
-                    PreviousPage = currentPage - 1,
-                    NextPage = currentPage + 1,
-                    NextPageUrl = nextIndex,
-                    PreviousPageUrl = previousIndex,
-                    Posts = splits[i],
+                    (string filePath, string _) = this.GetPostPaths(pathTemplate, metadatos);
+                    this.WriteFile(this.fileSystem.Path.Combine(outputPath, filePath), renderedPost);
+                }
+            }
+        }
+
+        public virtual void WriteTagIndex(string inputPath, string outputPath, IEnumerable<Link> tagPosts)
+        {
+            var fileText = this.fileSystem.File.ReadAllText(this.fileSystem.Path.Combine(inputPath, "templates", "_tag_index.liquid"));
+
+            var (tagOutputPath, _) = this.GetPaths(this.siteConfiguration.TagIndexRoute, null);
+            var renderVars = new
+            {
+                site = this.siteConfiguration,
+                tags = tagPosts,
+            };
+            var renderedContent = this.liquidRenderer.Render(fileText, renderVars);
+            this.WriteFile(this.fileSystem.Path.Combine(outputPath, tagOutputPath), renderedContent);
+        }
+
+        public virtual void WriteTags(string inputPath, string outputPath, Dictionary<string, (string urlPath, List<PostMetadata> metadatas)> tagPosts)
+        {
+            foreach (var (key, (outputFile, posts)) in tagPosts)
+            {
+                var fileText = this.fileSystem.File.ReadAllText(this.fileSystem.Path.Combine(inputPath, "templates", "_tag_page.liquid"));
+                var renderVars = new
+                {
+                    site = this.siteConfiguration,
+                    articles = posts,
+                    tag_name = key,
                 };
+                var renderedContent = this.liquidRenderer.Render(fileText, renderVars);
+                this.WriteFile(this.fileSystem.Path.Combine(outputPath, outputFile), renderedContent);
+            }
+        }
 
-                var stream = this.fileSystem.File.OpenWrite(Path.Combine(this.outputPath, index));
-                using var file = new StreamWriter(stream);
-                var fileText = this.fileSystem.File.ReadAllText(Path.Combine(this.rootPath, "templates", "_index.liquid"));
-                var template = Template.Parse(fileText);
+        public virtual void WriteIndex(IEnumerable<PostMetadata> posts, string rootPath, string outputPath)
+        {
+            var orderedPosts = posts.OrderBy(post => post.Date).Reverse().ToList();
+            var splits = this.SplitChunks(orderedPosts, size: 10);
 
-                var renderVars = Hash.FromAnonymousObject(new
+            for (int currentPage = 0; currentPage < splits.Count; currentPage++)
+            {
+                var paginator = this.CreatePaginator(splits, currentPage);
+
+                var fileText = this.fileSystem.File.ReadAllText(this.fileSystem.Path.Combine(rootPath, "templates", "_index.liquid"));
+
+                var renderVars = new
                 {
-                    site = this.siteConfig,
+                    site = this.siteConfiguration,
                     paginator = paginator,
                     posts = orderedPosts,
-                    pages = this.pages.Select(element => element.Item1),
-                });
+                };
 
-                var rendered = template.Render(renderVars);
+                var rendered = this.liquidRenderer.Render(fileText, renderVars);
+                using var stream = this.fileSystem.File.OpenWrite(this.fileSystem.Path.Combine(outputPath, paginator.CurrentPageUrl));
+                using var file = new StreamWriter(stream);
                 file.Write(rendered);
             }
         }
 
-        private void WriteTags()
+        public virtual Paginator CreatePaginator(List<List<PostMetadata>> splits, int currentPage)
         {
-            var tagIndexFile = Path.Combine(this.rootPath, "templates", "_tag_index.liquid");
-            var tagPageFile = Path.Combine(this.rootPath, "templates", "_tag_page.liquid");
+            var (previousIndex, index, nextIndex) = this.GenerateIndexNames(currentPage, splits.Count);
 
-            if (!this.fileSystem.File.Exists(tagIndexFile) && !this.fileSystem.File.Exists(tagPageFile))
+            return new Paginator()
             {
-                return;
-            }
-
-            var fileTagsIndex = this.fileSystem.File.ReadAllText(tagIndexFile);
-            var fielTagsPage = this.fileSystem.File.ReadAllText(tagPageFile);
-            var tagsIndexTemplate = Template.Parse(fileTagsIndex);
-            var tagsPageTemplate = Template.Parse(fielTagsPage);
-
-            foreach (var thing in this.tags)
-            {
-                var (tagPage, tagUrl) = this.tagLinks[thing.Key];
-                using var specificTagFileStream = this.fileSystem.File.OpenWrite(tagPage);
-                using var tagPageFileStreamWriter = new StreamWriter(specificTagFileStream);
-                var tagPageRendered = tagsPageTemplate.Render(Hash.FromAnonymousObject(new
-                {
-                    site = this.siteConfig,
-                    tag_name = thing.Key,
-                    articles = thing.Value,
-                }));
-                tagPageFileStreamWriter.Write(tagPageRendered);
-            }
-
-            var renderVars = Hash.FromAnonymousObject(new
-            {
-                site = this.siteConfig,
-                tags = this.tags.Keys.Select(tag => new Link { Text = tag, Url = this.tagLinks[tag].Item2 }),
-            });
-
-            var stream = this.fileSystem.File.OpenWrite(Path.Combine(this.outputPath, "tags.html"));
-            using var file = new StreamWriter(stream);
-            var rendered = tagsIndexTemplate.Render(renderVars);
-            file.Write(rendered);
+                PageCount = splits.Count,
+                CurrentPage = currentPage,
+                CurrentPageUrl = index,
+                HasNextPage = nextIndex is not null,
+                HasPreviousPage = previousIndex is not null,
+                PreviousPage = currentPage - 1,
+                NextPage = currentPage + 1,
+                NextPageUrl = nextIndex,
+                PreviousPageUrl = previousIndex,
+                Posts = splits[currentPage],
+            };
         }
 
-        private void MoveStaticFiles()
+        public virtual (string previousIndex, string currentIndex, string nextIndex) GenerateIndexNames(int currentPage, int pageCount)
         {
-            foreach (string dirPath in Directory.GetDirectories(this.staticInputPath, "*", SearchOption.AllDirectories))
+            var first = currentPage == 0;
+            var last = currentPage == pageCount - 1;
+            var index = currentPage == 0 ? "index.html" : $"index-{currentPage}.html";
+            var previousIndex = $"index-{currentPage - 1}.html";
+            var nextIndex = $"index-{currentPage + 1}.html";
+            if (currentPage - 1 == 0)
             {
-                this.fileSystem.Directory.CreateDirectory(dirPath.Replace(this.staticInputPath, this.outputPath));
+                previousIndex = "index.html";
             }
 
-            foreach (string newPath in Directory.GetFiles(this.staticInputPath, "*.*", SearchOption.AllDirectories))
-            {
-                this.fileSystem.File.Copy(newPath, newPath.Replace(this.staticInputPath, this.outputPath), true);
-            }
+            return (first ? null : previousIndex, index, last ? null : nextIndex);
         }
 
-        private Site GetConfig()
+        public virtual string RenderContent(PostMetadata metadata, string content, string inputPath)
         {
-            var siteConfig = this.fileSystem.File.ReadAllText(Path.Combine(this.rootPath, "site.yml"));
-            var config = YamlDeserializer.Deserialize<SiteConfiguration>(siteConfig);
-
-            return this.mapper.Map<Site>(config);
-        }
-
-        private IEnumerable<string> GetFilesIncludingSubfolders(string path)
-        {
-            var paths = new List<string>();
-
-            if (!this.fileSystem.Directory.Exists(path))
+            var contentWrapped = new string[]
             {
-                return paths;
-            }
-
-            var directories = this.fileSystem.Directory.GetDirectories(path);
-
-            foreach (var directory in directories)
-            {
-                paths.AddRange(this.GetFilesIncludingSubfolders(directory));
-            }
-
-            paths.AddRange(this.fileSystem.Directory.GetFiles(path).ToList());
-            return paths;
-        }
-
-        private void SetPaths(string rootPath, string outPath)
-        {
-            this.outputPath = outPath;
-            this.rootPath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), rootPath));
-            this.postsInputPath = Path.Combine(this.rootPath, "content", PostsPath);
-            this.pagesInputPath = Path.Combine(this.rootPath, "content", PagesPath);
-            this.staticInputPath = Path.Combine(this.rootPath, StaticPath);
-            this.postsOutputPath = Path.Combine(this.outputPath, PostsPath);
-            this.pagesOutputPath = Path.Combine(this.outputPath, PagesPath);
-            this.tagsOutputPath = Path.Combine(this.outputPath, TagsPath);
-            Template.FileSystem = new LockdownFileSystem(Path.Combine(this.rootPath, "templates"));
-        }
-
-        private Tuple<T, string> GenerateContent<T>(string filePath, string contentBlockName)
-            where T : Content
-        {
-            var fileText = this.fileSystem.File.ReadAllText(filePath);
-            var document = fileText.ParseMarkdown();
-            var frontMatter = document.GetFrontMatter<PostConfiguration>();
-            var pageContent = this.mapper.Map<T>(frontMatter);
-            using var writer = new StringWriter();
-            var renderer = new HtmlRenderer(writer);
-
-            writer.Write($"{{% extends '{frontMatter.Layout}' %}}\n\n");
-
-            writer.Write($"{{% block {contentBlockName} %}}\n");
-
-            foreach (var documentPart in document.Skip(1))
-            {
-                renderer.Write(documentPart);
-            }
-
-            writer.Write("{% endblock %}\n");
-            writer.Flush();
-
-            return Tuple.Create(pageContent, writer.ToString());
-        }
-
-        private void WriteContent<T>(string fileToWriteTo, string stringTemplate, T content)
-            where T : Content
-        {
-            var siteVars = new
-            {
-                site = this.siteConfig,
-                post = content,
-                page = content,
-                pages = this.pages.Select(element => element.Item1),
+                "{% extends post %}",
+                "{% block post_content %}",
+                this.markdownRenderer.RenderMarkdown(content),
+                "{% endblock %}",
             };
 
-            var template = Template.Parse(stringTemplate);
-            var rendered = template.Render(Hash.FromAnonymousObject(siteVars));
-
-            using var stream = this.fileSystem.File.OpenWrite(fileToWriteTo);
-            using var file = new StreamWriter(stream);
-            file.Write(rendered);
-        }
-
-        private Tuple<string, string> CalculatePageRoutes(string filePath)
-        {
-            var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(filePath);
-            var parts = filePath[this.postsInputPath.Length..].TrimStart('/', ' ')
-                .Split('/', StringSplitOptions.RemoveEmptyEntries).SkipLast(1);
-
-            var outFileName = $"{fileNameWithoutExtension}.html";
-            var fileToWriteTo = Path.Combine(this.pagesOutputPath, outFileName);
-            var url = "/" + PagesPath + "/" + outFileName;
-
-            return Tuple.Create(fileToWriteTo, url);
-        }
-
-        private Tuple<string, string> CalculatePostRoutes(string filePath)
-        {
-            var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(filePath);
-            var parts = filePath[this.postsInputPath.Length..].TrimStart('/', ' ')
-                .Split('/', StringSplitOptions.RemoveEmptyEntries).SkipLast(1);
-            string fileToWriteTo;
-            string url;
-            var finalFilename = $"{fileNameWithoutExtension}.html";
-            if (parts.Any())
+            var postVariables = new
             {
-                var newFileDirectory = Path.Combine(parts.ToArray());
-                var path = Path.Combine(this.outputPath, newFileDirectory);
-                if (!Directory.Exists(path))
+                post = metadata,
+                site = this.siteConfiguration,
+            };
+
+            var renderedContent = this.liquidRenderer.Render(string.Join('\n', contentWrapped), postVariables);
+
+            return renderedContent;
+        }
+
+        public virtual PostMetadata ConvertMetadata(string metadata)
+        {
+            var rawMetadata = this.yamlParser.ParseExtras<Raw.PostMetadata>(metadata);
+            return this.mapper.Map<PostMetadata>(rawMetadata);
+        }
+
+        public virtual (string metadata, string content) SplitPost(string post)
+        {
+            var metadatStringBulder = new StringBuilder();
+            var contentStringBuilder = new StringBuilder();
+            int separators = 0;
+            const string separator = "---";
+            foreach (var line in post.Split(Environment.NewLine))
+            {
+                if (separators == 2)
                 {
-                    Directory.CreateDirectory(path);
+                    contentStringBuilder.Append(line).AppendLine();
                 }
-
-                fileToWriteTo = Path.Combine(this.outputPath, finalFilename);
-                url = finalFilename;
+                else if (line == separator)
+                {
+                    separators += 1;
+                }
+                else
+                {
+                    metadatStringBulder.Append(line).AppendLine();
+                }
             }
-            else
-            {
-                fileToWriteTo = Path.Combine(this.postsOutputPath, finalFilename);
-                url = "/" + PostsPath + "/" + finalFilename;
-            }
 
-            return Tuple.Create(fileToWriteTo, url);
+            return (metadatStringBulder.ToString(), contentStringBuilder.ToString());
         }
 
-        private Tuple<string, string> CalculateTagRoutes(string tagName)
+        public virtual IEnumerable<string> GetPosts(string inputPath)
         {
-            var tagUrl = Path.Combine("tags", $"{tagName}.html");
-            var tagFile = Path.Combine(this.outputPath, tagUrl);
+            var inputPostsPath = this.fileSystem.Path.Combine(inputPath, "content", "posts");
+            if (this.fileSystem.Directory.Exists(inputPostsPath))
+            {
+                foreach (var file in this.fileSystem.Directory.EnumerateFiles(inputPostsPath, "*.*", SearchOption.AllDirectories))
+                {
+                    yield return this.fileSystem.File.ReadAllText(file);
+                }
+            }
+        }
 
-            return Tuple.Create(tagFile, '/' + tagUrl.Replace('\\', '/'));
+        public virtual void CopyFiles(string input, string output)
+        {
+            var source = this.fileSystem.DirectoryInfo.FromDirectoryName(input);
+            var target = this.fileSystem.DirectoryInfo.FromDirectoryName(output);
+
+            this.CopyFiles(source, target);
+        }
+
+        public virtual void WriteFile(string filePath, string content)
+        {
+            var parentDirectory = this.fileSystem.Directory.GetParent(filePath);
+            if (!parentDirectory.Exists)
+            {
+                parentDirectory.Create();
+            }
+
+            this.fileSystem.File.WriteAllText(filePath, content);
+        }
+
+        public virtual (string filePath, string canonicalPath) GetPostPaths(string pathTemplate, PostMetadata metadata)
+        {
+            var postSlug = this.slugifier.Slugify(metadata.Title);
+            return this.GetPaths(pathTemplate, postSlug);
+        }
+
+        private (string filePath, string canonicalPath) GetPaths(string pathTemplate, string replaementValue)
+        {
+            pathTemplate = pathTemplate.Replace("{}", replaementValue).TrimStart('/');
+
+            var filePath = pathTemplate.EndsWith(".html") ?
+                pathTemplate : this.fileSystem.Path.Combine(pathTemplate, "index.html").Replace('\\', '/');
+
+            var canonicalPath = pathTemplate.EndsWith("/index.html") ?
+                pathTemplate.Substring(0, pathTemplate.Length - 11) : pathTemplate;
+
+            return (filePath, $"/{canonicalPath}");
+        }
+
+        private Raw.SiteConfiguration ReadSiteConfiguration(string inputPath)
+        {
+            var source = this.fileSystem.Path.Combine(inputPath, "site.yml");
+            var text = this.fileSystem.File.ReadAllText(source);
+
+            var siteConf = this.yamlParser.Parse<Raw.SiteConfiguration>(text);
+
+            // Set defaults
+            siteConf.PostRoutes = siteConf.PostRoutes ?? new List<string> { "post/{}.html" };
+
+            return siteConf;
+        }
+
+        private void CopyFiles(IDirectoryInfo source, IDirectoryInfo target)
+        {
+            foreach (var fi in source.GetFiles())
+            {
+                fi.CopyTo(this.fileSystem.Path.Combine(target.FullName, fi.Name));
+            }
+
+            foreach (var subDirectory in source.GetDirectories())
+            {
+                var nextTargetSubDir = target.CreateSubdirectory(subDirectory.Name);
+                this.CopyFiles(subDirectory, nextTargetSubDir);
+            }
         }
     }
 }

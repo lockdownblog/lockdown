@@ -1,10 +1,10 @@
-namespace Lockdown.Build.OutputConfiguration
+﻿namespace Lockdown.Build.Entities
 {
     using System.Collections;
     using System.Collections.Generic;
     using DotLiquid;
 
-    public class Paginator : Drop, IEnumerable<Post>
+    public class Paginator : Drop, IEnumerable<PostMetadata>
     {
         public int CurrentPage { get; set; }
 
@@ -18,13 +18,15 @@ namespace Lockdown.Build.OutputConfiguration
 
         public string NextPageUrl { get; set; }
 
+        public string CurrentPageUrl { get; set; }
+
         public string PreviousPageUrl { get; set; }
 
         public int PageCount { get; set; }
 
-        public List<Post> Posts { get; set; }
+        public List<PostMetadata> Posts { get; set; }
 
-        public IEnumerator<Post> GetEnumerator()
+        public IEnumerator<PostMetadata> GetEnumerator()
         {
             foreach (var post in this.Posts)
             {

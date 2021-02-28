@@ -16,6 +16,11 @@
                     .ForMember(dest => dest.CanonicalUrl, opt => opt.Ignore())
                     .ForMember(dest => dest.Tags, opt => opt.Ignore())
                     .ForMember(
+                        dest => dest.DateTime,
+                        opt => opt.MapFrom(
+                            orig => orig.DateTime.GetValueOrDefault(
+                                orig.Date.GetValueOrDefault(DateTime.Now))))
+                    .ForMember(
                         dest => dest.Date,
                         opt => opt.MapFrom(
                             orig => orig.Date.GetValueOrDefault(

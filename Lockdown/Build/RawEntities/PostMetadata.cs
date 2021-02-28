@@ -9,6 +9,9 @@
         [YamlMember(Alias = "title")]
         public string Title { get; set; }
 
+        [YamlMember(Alias = "slug")]
+        public string Slug { get; set; }
+
         [YamlMember(Alias = "date")]
         public DateTime? Date { get; set; }
 

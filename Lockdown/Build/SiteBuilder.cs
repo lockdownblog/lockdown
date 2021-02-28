@@ -307,7 +307,7 @@
 
         public virtual (string filePath, string canonicalPath) GetPostPaths(string pathTemplate, PostMetadata metadata)
         {
-            var postSlug = this.slugifier.Slugify(metadata.Title);
+            var postSlug = this.slugifier.VerifySlug(metadata.Slug) ? metadata.Slug : this.slugifier.Slugify(metadata.Title);
             return this.GetPaths(pathTemplate, postSlug);
         }
 

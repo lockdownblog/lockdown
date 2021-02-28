@@ -12,6 +12,18 @@
         [YamlMember(Alias = "date")]
         public DateTime? Date { get; set; }
 
+        [YamlMember(Alias = "summary")]
+        public string Summary { get; set; }
+
+        [YamlMember(Alias = "author")]
+        public string Author { get; set; }
+
+        [YamlMember(Alias = "datetime")]
+        public DateTime? DateTime { get; set; }
+
+        [YamlMember(Alias = "image")]
+        public string Image { get; set; }
+
         [YamlMember(Alias = "tags")]
         public string Tags { get; set; }
 

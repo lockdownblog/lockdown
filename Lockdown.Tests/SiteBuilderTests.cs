@@ -203,6 +203,20 @@ namespace Lockdown.Tests
             canonicalPath.ShouldBe(canonicalExpected);
         }
 
+        [Theory]
+        [InlineData(null, "post/hello-world/index.html", "/post/hello-world")]
+        [InlineData("abc", "post/abc/index.html", "/post/abc")]
+        [InlineData("Not a slug", "post/hello-world/index.html", "/post/hello-world")]
+        public void TestGetRoutesWithSlug(string slug, string fileExpected, string canonicalExpected)
+        {
+            var metadata = new PostMetadata { Title = "Hello World", Slug = slug };
+
+            var (filePath, canonicalPath) = genericSiteBuilder.GetPostPaths(pathTemplate: "/post/{}", metadata: metadata);
+
+            filePath.ShouldBe(fileExpected);
+            canonicalPath.ShouldBe(canonicalExpected);
+        }
+
         private async Task<IDocument> ParseHtml(string document)
         {
             var context = BrowsingContext.New(Configuration.Default);

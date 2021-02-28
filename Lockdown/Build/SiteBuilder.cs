@@ -261,7 +261,7 @@
                 {
                     contentStringBuilder.Append(line).AppendLine();
                 }
-                else if (line == separator)
+                else if (line.TrimEnd() == separator)
                 {
                     separators += 1;
                 }

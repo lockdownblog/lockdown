@@ -16,6 +16,7 @@ using Lockdown.Build.Utils;
 using Lockdown.Build.Entities;
 using Lockdown.Build.Markdown;
 using AutoMapper;
+using Lockdown.Tests.Data;
 
 namespace Lockdown.Tests
 {
@@ -100,6 +101,18 @@ namespace Lockdown.Tests
             mockSiteBuilder.Verify(sb => sb.CopyFiles(inputPath, output));
         }
         */
+
+        [Theory]
+        [ClassData(typeof(SplitPostTestData))]
+        public void CanAddTheoryClassData(string post, string metadata, string content)
+        {
+            var (actualMetadata, actualContent) = this.genericSiteBuilder.SplitPost(post);
+
+
+            actualMetadata.ShouldBe(metadata);
+            actualContent.ShouldBe(content);
+
+        }
 
         [Fact]
         public void TestCopyFiles()

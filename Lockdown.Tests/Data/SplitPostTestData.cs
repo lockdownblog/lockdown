@@ -1,9 +1,9 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-
-namespace Lockdown.Tests.Data
+﻿namespace Lockdown.Tests.Data
 {
+    using System;
+    using System.Collections;
+    using System.Collections.Generic;
+
     public class SplitPostTestData : IEnumerable<object[]>
         {
             public IEnumerator<object[]> GetEnumerator()
@@ -15,6 +15,6 @@ namespace Lockdown.Tests.Data
             yield return new object[] { $"--- {nl}ABC{nl}---  {nl}XYZ", $"ABC{nl}", $"XYZ{nl}" };
         }
 
-            IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+            IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
         }
     }

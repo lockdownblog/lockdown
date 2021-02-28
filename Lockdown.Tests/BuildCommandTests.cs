@@ -1,13 +1,11 @@
-using Lockdown.Commands;
-using System;
-using Xunit;
-using Lockdown.Tests.Utils;
-using Shouldly;
-using Moq;
-using Lockdown.Build;
-
-namespace Lockdown.Tests
+﻿namespace Lockdown.Tests
 {
+    using Lockdown.Build;
+    using Lockdown.Commands;
+    using Lockdown.Tests.Utils;
+    using Moq;
+    using Xunit;
+
     public class BuildCommandTests
     {
         [Fact]

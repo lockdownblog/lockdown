@@ -1,17 +1,13 @@
-﻿using System;
-using System.Threading.Tasks;
-using Lockdown.Build.Utils;
-using Xunit;
-using Raw = Lockdown.Build.RawEntities;
-using Shouldly;
-using Lockdown.Build.Markdown;
-
-namespace Lockdown.Tests
+﻿namespace Lockdown.Tests
 {
+    using Lockdown.Build.Markdown;
+    using Shouldly;
+    using Xunit;
+
     public class MarkdownRendererTests
     {
+        private readonly MarkdownRenderer markdownRenderer;
 
-        MarkdownRenderer markdownRenderer;
         public MarkdownRendererTests()
         {
             this.markdownRenderer = new MarkdownRenderer();

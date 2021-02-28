@@ -1,18 +1,17 @@
-﻿using System;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Collections.Generic;
-using Lockdown.Build.Utils;
-using Xunit;
-using Raw = Lockdown.Build.RawEntities;
-using Shouldly;
-
-namespace Lockdown.Tests
+﻿namespace Lockdown.Tests
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using Lockdown.Build.Utils;
+    using Shouldly;
+    using Xunit;
+    using Raw = Lockdown.Build.RawEntities;
+
     public class TestYamlParser
     {
+        private readonly YamlParser yamlParser;
 
-        YamlParser yamlParser;
         public TestYamlParser()
         {
             this.yamlParser = new YamlParser();
@@ -25,7 +24,6 @@ namespace Lockdown.Tests
 tags: lockdown,csharp, dotnet
 date: 2021-02-20";
             var expectedTags = new HashSet<string> { "lockdown", "csharp", "dotnet" };
-
 
             var rawMetadata = this.yamlParser.Parse<Raw.PostMetadata>(yamlString);
 
@@ -43,7 +41,6 @@ date: 2021-02-20
 this: is extra
 tags: something,is wrong";
 
-
             var rawMetadata = this.yamlParser.Parse<Raw.PostMetadata>(yamlString);
 
             rawMetadata.Title.ShouldBe("Russian hardbass");
@@ -58,7 +55,6 @@ date: 2021-02-20
 extra: is extra info
 tags: something,is wrong
 value: something";
-
 
             var rawMetadata = this.yamlParser.ParseExtras<Raw.PostMetadata>(yamlString);
 

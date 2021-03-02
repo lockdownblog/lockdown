@@ -190,7 +190,7 @@ tags: lockdown, Data Science, Some Other tag
         [InlineData("/post/{}/index.html", "post/hello-world/index.html", "/post/hello-world")]
         public void TestGetRoutes(string template, string fileExpected, string canonicalExpected)
         {
-            var metadata = new PostMetadata { Title = "Hello World", Slug="hello-world" };
+            var metadata = new PostMetadata { Title = "Hello World", Slug = "hello-world" };
 
             var (filePath, canonicalPath) = this.genericSiteBuilder.GetPostPaths(template, metadata);
 

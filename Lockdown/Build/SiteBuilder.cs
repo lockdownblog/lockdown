@@ -61,8 +61,7 @@
 
             var postMetadata = new List<(PostMetadata metadata, string content)>();
 
-            var tagPosts = new Dictionary<string, (string urlPath, List<PostMetadata> metadatas)>();
-            var tagCanonicalUrl = new Dictionary<string, Link>();
+            var tagPosts = new TagCollection();
 
             var rawPosts = this.GetPosts(inputPath).ToList();
 
@@ -80,21 +79,20 @@
                     if (!tagPosts.ContainsKey(tag))
                     {
                         var (tagOutputPath, canonicalUrl) = this.GetPaths(this.siteConfiguration.TagPageRoute, tag);
-                        tagCanonicalUrl[tag] = new Link { Url = canonicalUrl, Text = tag };
-                        tagPosts[tag] = (tagOutputPath, new List<PostMetadata>());
+                        tagPosts[tag] = new TagGroup(link: new Link { Url = canonicalUrl, Text = tag }, slug: tagOutputPath);
                     }
 
-                    tagPosts[tag].metadatas.Add(metadatos);
+                    tagPosts[tag].Add(metadatos);
                 }
 
-                metadatos.Tags = metadatos.TagArray.Select(tag => tagCanonicalUrl[tag]).ToArray();
+                metadatos.Tags = metadatos.TagArray.Select(tag => tagPosts[tag].Link).ToArray();
 
                 postMetadata.Add((metadatos, rawContent));
             }
 
             this.WriteTags(inputPath, outputPath, tagPosts);
 
-            this.WriteTagIndex(inputPath, outputPath, tagCanonicalUrl.Values);
+            this.WriteTagIndex(inputPath, outputPath, tagPosts.Values.Select(tag => tag.Link));
 
             this.WritePosts(inputPath, outputPath, rawSiteConfiguration, postMetadata);
 
@@ -147,19 +145,19 @@
             this.WriteFile(this.fileSystem.Path.Combine(outputPath, tagOutputPath), renderedContent);
         }
 
-        public virtual void WriteTags(string inputPath, string outputPath, Dictionary<string, (string urlPath, List<PostMetadata> metadatas)> tagPosts)
+        public virtual void WriteTags(string inputPath, string outputPath, TagCollection tagCollection)
         {
-            foreach (var (key, (outputFile, posts)) in tagPosts)
+            foreach (var (key, tagGroup) in tagCollection)
             {
                 var fileText = this.fileSystem.File.ReadAllText(this.fileSystem.Path.Combine(inputPath, "templates", "_tag_page.liquid"));
                 var renderVars = new
                 {
                     site = this.siteConfiguration,
-                    articles = posts,
+                    articles = tagGroup,
                     tag_name = key,
                 };
                 var renderedContent = this.liquidRenderer.Render(fileText, renderVars);
-                this.WriteFile(this.fileSystem.Path.Combine(outputPath, outputFile), renderedContent);
+                this.WriteFile(this.fileSystem.Path.Combine(outputPath, tagGroup.Slug), renderedContent);
             }
         }
 

@@ -20,7 +20,7 @@
 
             var html = this.markdownRenderer.RenderMarkdown(md);
 
-            html.ShouldBe("<h1>Hello world</h1>\n");
+            html.ShouldBe("<h1 id=\"hello-world\">Hello world</h1>\n");
         }
     }
 }

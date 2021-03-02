@@ -27,6 +27,9 @@
         [Option("-o|--output")]
         public string OutputPath { get; set; } = "./_site";
 
+        [Option("-p|--port")]
+        public int Port { get; set; } = 5000;
+
         public int OnExecute()
         {
             // Construye el sitio web en OutputPath
@@ -46,7 +49,7 @@
                 .UseConfiguration(configBuilder.Build())
                 .UseStartup<Startup>()
                 .UseKestrel()
-                .UseUrls($"http://*:5000")
+                .UseUrls($"http://*:{this.Port}")
                 .Build();
 
             host.Run();

@@ -246,7 +246,12 @@
         public virtual PostMetadata ConvertMetadata(string metadata)
         {
             var rawMetadata = this.yamlParser.ParseExtras<Raw.PostMetadata>(metadata);
-            return this.mapper.Map<PostMetadata>(rawMetadata);
+            var trueMetadata = this.mapper.Map<PostMetadata>(rawMetadata);
+
+            trueMetadata.Slug = this.slugifier.VerifySlug(trueMetadata.Slug) ? trueMetadata.Slug : this.slugifier.Slugify(trueMetadata.Title);
+            trueMetadata.TagArray = trueMetadata.TagArray.Select(nonNormTag => this.slugifier.Slugify(nonNormTag)).ToArray();
+
+            return trueMetadata;
         }
 
         public virtual (string metadata, string content) SplitPost(string post)
@@ -307,8 +312,7 @@
 
         public virtual (string filePath, string canonicalPath) GetPostPaths(string pathTemplate, PostMetadata metadata)
         {
-            var postSlug = this.slugifier.VerifySlug(metadata.Slug) ? metadata.Slug : this.slugifier.Slugify(metadata.Title);
-            return this.GetPaths(pathTemplate, postSlug);
+            return this.GetPaths(pathTemplate, metadata.Slug);
         }
 
         private (string filePath, string canonicalPath) GetPaths(string pathTemplate, string replaementValue)

@@ -127,6 +127,39 @@
             this.fakeFileSystem.File.ReadAllText(destination).ShouldBe(content);
         }
 
+        [Fact]
+        public void TestConvertMetadata()
+        {
+            var metadata = @"layout: post
+title: ""My first post!""
+summary: ""This is my first Lockdown post""
+datetime: 2020-12-29 12:00
+tags: lockdown, Data Science, Some Other tag
+";
+            var expectedMetadata = new PostMetadata
+            {
+                Title = "My first post!",
+                Slug = "my-first-post",
+                TagArray = new string[] { "lockdown", "data-science", "some-other-tag" },
+            };
+
+            var siteBuilder = new SiteBuilder(
+                this.fakeFileSystem,
+                new YamlParser(),
+                this.moqMarkdownRenderer.Object,
+                this.moqLiquidRenderer.Object,
+                this.slugifier,
+                this.mapper);
+
+            // Act
+            var actualMetadata = siteBuilder.ConvertMetadata(metadata);
+
+            // Assert
+            actualMetadata.Title.ShouldBe(expectedMetadata.Title);
+            actualMetadata.Slug.ShouldBe(expectedMetadata.Slug);
+            actualMetadata.TagArray.ShouldBe(expectedMetadata.TagArray);
+        }
+
         [Theory]
         [InlineData(0)]
         [InlineData(1)]
@@ -157,23 +190,9 @@
         [InlineData("/post/{}/index.html", "post/hello-world/index.html", "/post/hello-world")]
         public void TestGetRoutes(string template, string fileExpected, string canonicalExpected)
         {
-            var metadata = new PostMetadata { Title = "Hello World" };
+            var metadata = new PostMetadata { Title = "Hello World", Slug="hello-world" };
 
             var (filePath, canonicalPath) = this.genericSiteBuilder.GetPostPaths(template, metadata);
-
-            filePath.ShouldBe(fileExpected);
-            canonicalPath.ShouldBe(canonicalExpected);
-        }
-
-        [Theory]
-        [InlineData(null, "post/hello-world/index.html", "/post/hello-world")]
-        [InlineData("abc", "post/abc/index.html", "/post/abc")]
-        [InlineData("Not a slug", "post/hello-world/index.html", "/post/hello-world")]
-        public void TestGetRoutesWithSlug(string slug, string fileExpected, string canonicalExpected)
-        {
-            var metadata = new PostMetadata { Title = "Hello World", Slug = slug };
-
-            var (filePath, canonicalPath) = this.genericSiteBuilder.GetPostPaths(pathTemplate: "/post/{}", metadata: metadata);
 
             filePath.ShouldBe(fileExpected);
             canonicalPath.ShouldBe(canonicalExpected);

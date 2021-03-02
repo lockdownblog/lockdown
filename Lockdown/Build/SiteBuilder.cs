@@ -61,7 +61,7 @@
 
             var postMetadata = new List<(PostMetadata metadata, string content)>();
 
-            var tagPosts = new TagCollection();
+            var tagCollection = new TagCollection();
 
             var rawPosts = this.GetPosts(inputPath).ToList();
 
@@ -76,27 +76,27 @@
 
                 foreach (var tag in metadatos.TagArray)
                 {
-                    if (!tagPosts.ContainsKey(tag))
+                    if (!tagCollection.ContainsKey(tag))
                     {
                         var (tagOutputPath, canonicalUrl) = this.GetPaths(this.siteConfiguration.TagPageRoute, tag);
-                        tagPosts[tag] = new TagGroup(link: new Link { Url = canonicalUrl, Text = tag }, slug: tagOutputPath);
+                        tagCollection[tag] = new TagGroup(link: new Link { Url = canonicalUrl, Text = tag }, slug: tagOutputPath);
                     }
 
-                    tagPosts[tag].Add(metadatos);
+                    tagCollection[tag].Add(metadatos);
                 }
 
-                metadatos.Tags = metadatos.TagArray.Select(tag => tagPosts[tag].Link).ToArray();
+                metadatos.Tags = metadatos.TagArray.Select(tag => tagCollection[tag].Link).ToArray();
 
                 postMetadata.Add((metadatos, rawContent));
             }
 
-            this.WriteTags(inputPath, outputPath, tagPosts);
+            this.WriteTags(inputPath, outputPath, tagCollection);
 
-            this.WriteTagIndex(inputPath, outputPath, tagPosts.Values.Select(tag => tag.Link));
+            this.WriteTagIndex(inputPath, outputPath, tagCollection.Values.Select(tag => tag.Link));
 
             this.WritePosts(inputPath, outputPath, rawSiteConfiguration, postMetadata);
 
-            this.WriteIndex(postMetadata.Select(element => element.metadata), inputPath, outputPath);
+            this.WriteIndex(postMetadata.Select(element => element.metadata), tagCollection, inputPath, outputPath);
         }
 
         public virtual List<List<T>> SplitChunks<T>(List<T> values, int size = 30)
@@ -161,7 +161,7 @@
             }
         }
 
-        public virtual void WriteIndex(IEnumerable<PostMetadata> posts, string rootPath, string outputPath)
+        public virtual void WriteIndex(IEnumerable<PostMetadata> posts, TagCollection tagCollection, string rootPath, string outputPath)
         {
             var orderedPosts = posts.OrderBy(post => post.Date).Reverse().ToList();
             var splits = this.SplitChunks(orderedPosts, size: 10);
@@ -175,6 +175,7 @@
                 var renderVars = new
                 {
                     site = this.siteConfiguration,
+                    tags = tagCollection.Values,
                     paginator = paginator,
                     posts = orderedPosts,
                 };

@@ -61,8 +61,7 @@
 
             var postMetadata = new List<(PostMetadata metadata, string content)>();
 
-            var tagPosts = new Dictionary<string, (string urlPath, List<PostMetadata> metadatas)>();
-            var tagCanonicalUrl = new Dictionary<string, Link>();
+            var tagCollection = new TagCollection();
 
             var rawPosts = this.GetPosts(inputPath).ToList();
 
@@ -77,28 +76,27 @@
 
                 foreach (var tag in metadatos.TagArray)
                 {
-                    if (!tagPosts.ContainsKey(tag))
+                    if (!tagCollection.ContainsKey(tag))
                     {
                         var (tagOutputPath, canonicalUrl) = this.GetPaths(this.siteConfiguration.TagPageRoute, tag);
-                        tagCanonicalUrl[tag] = new Link { Url = canonicalUrl, Text = tag };
-                        tagPosts[tag] = (tagOutputPath, new List<PostMetadata>());
+                        tagCollection[tag] = new TagGroup(link: new Link { Url = canonicalUrl, Text = tag }, slug: tagOutputPath);
                     }
 
-                    tagPosts[tag].metadatas.Add(metadatos);
+                    tagCollection[tag].Add(metadatos);
                 }
 
-                metadatos.Tags = metadatos.TagArray.Select(tag => tagCanonicalUrl[tag]).ToArray();
+                metadatos.Tags = metadatos.TagArray.Select(tag => tagCollection[tag].Link).ToArray();
 
                 postMetadata.Add((metadatos, rawContent));
             }
 
-            this.WriteTags(inputPath, outputPath, tagPosts);
+            this.WriteTags(inputPath, outputPath, tagCollection);
 
-            this.WriteTagIndex(inputPath, outputPath, tagCanonicalUrl.Values);
+            this.WriteTagIndex(inputPath, outputPath, tagCollection.Values.Select(tag => tag.Link));
 
             this.WritePosts(inputPath, outputPath, rawSiteConfiguration, postMetadata);
 
-            this.WriteIndex(postMetadata.Select(element => element.metadata), inputPath, outputPath);
+            this.WriteIndex(postMetadata.Select(element => element.metadata), tagCollection, inputPath, outputPath);
         }
 
         public virtual List<List<T>> SplitChunks<T>(List<T> values, int size = 30)
@@ -147,23 +145,23 @@
             this.WriteFile(this.fileSystem.Path.Combine(outputPath, tagOutputPath), renderedContent);
         }
 
-        public virtual void WriteTags(string inputPath, string outputPath, Dictionary<string, (string urlPath, List<PostMetadata> metadatas)> tagPosts)
+        public virtual void WriteTags(string inputPath, string outputPath, TagCollection tagCollection)
         {
-            foreach (var (key, (outputFile, posts)) in tagPosts)
+            foreach (var (key, tagGroup) in tagCollection)
             {
                 var fileText = this.fileSystem.File.ReadAllText(this.fileSystem.Path.Combine(inputPath, "templates", "_tag_page.liquid"));
                 var renderVars = new
                 {
                     site = this.siteConfiguration,
-                    articles = posts,
+                    articles = tagGroup,
                     tag_name = key,
                 };
                 var renderedContent = this.liquidRenderer.Render(fileText, renderVars);
-                this.WriteFile(this.fileSystem.Path.Combine(outputPath, outputFile), renderedContent);
+                this.WriteFile(this.fileSystem.Path.Combine(outputPath, tagGroup.Slug), renderedContent);
             }
         }
 
-        public virtual void WriteIndex(IEnumerable<PostMetadata> posts, string rootPath, string outputPath)
+        public virtual void WriteIndex(IEnumerable<PostMetadata> posts, TagCollection tagCollection, string rootPath, string outputPath)
         {
             var orderedPosts = posts.OrderBy(post => post.Date).Reverse().ToList();
             var splits = this.SplitChunks(orderedPosts, size: 10);
@@ -177,6 +175,7 @@
                 var renderVars = new
                 {
                     site = this.siteConfiguration,
+                    tags = tagCollection.Values,
                     paginator = paginator,
                     posts = orderedPosts,
                 };
@@ -246,7 +245,12 @@
         public virtual PostMetadata ConvertMetadata(string metadata)
         {
             var rawMetadata = this.yamlParser.ParseExtras<Raw.PostMetadata>(metadata);
-            return this.mapper.Map<PostMetadata>(rawMetadata);
+            var trueMetadata = this.mapper.Map<PostMetadata>(rawMetadata);
+
+            trueMetadata.Slug = this.slugifier.VerifySlug(trueMetadata.Slug) ? trueMetadata.Slug : this.slugifier.Slugify(trueMetadata.Title);
+            trueMetadata.TagArray = trueMetadata.TagArray.Select(nonNormTag => this.slugifier.Slugify(nonNormTag)).ToArray();
+
+            return trueMetadata;
         }
 
         public virtual (string metadata, string content) SplitPost(string post)
@@ -307,8 +311,7 @@
 
         public virtual (string filePath, string canonicalPath) GetPostPaths(string pathTemplate, PostMetadata metadata)
         {
-            var postSlug = this.slugifier.VerifySlug(metadata.Slug) ? metadata.Slug : this.slugifier.Slugify(metadata.Title);
-            return this.GetPaths(pathTemplate, postSlug);
+            return this.GetPaths(pathTemplate, metadata.Slug);
         }
 
         private (string filePath, string canonicalPath) GetPaths(string pathTemplate, string replaementValue)

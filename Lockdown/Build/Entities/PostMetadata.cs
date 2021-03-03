@@ -1,6 +1,7 @@
 ﻿namespace Lockdown.Build.Entities
 {
     using System;
+    using System.Collections.Generic;
     using DotLiquid;
 
     public class PostMetadata : Drop
@@ -20,6 +21,8 @@
         public string Image { get; set; }
 
         public Link[] Tags { get; set; }
+
+        public List<string> PostRoutes { get; set; }
 
         public string[] TagArray { get; set; }
 

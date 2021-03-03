@@ -4,6 +4,10 @@ title: "My first post!"
 summary: "This is my first Lockdown post"
 datetime: 2020-12-29 12:00
 tags: lockdown
+post-routes:
+    - /custom/post/route/{}/index.html
+    - /post/{}/index.html
+    - /post/{}.html
 ---
 
 ## Hello world!

@@ -1,6 +1,7 @@
 ﻿namespace Lockdown.Build.RawEntities
 {
     using System;
+    using System.Collections.Generic;
     using System.Linq;
     using YamlDotNet.Serialization;
 
@@ -29,6 +30,9 @@
 
         [YamlMember(Alias = "tags")]
         public string Tags { get; set; }
+
+        [YamlMember(Alias = "post-routes")]
+        public List<string> PostRoutes { get; set; }
 
         [YamlIgnore]
         public string[] TagArray => this.Tags?

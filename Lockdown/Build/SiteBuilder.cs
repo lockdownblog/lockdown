@@ -70,7 +70,8 @@
                 var (rawMetadata, rawContent) = this.SplitPost(rawPost);
                 var metadatos = this.ConvertMetadata(rawMetadata);
 
-                var mainRoute = rawSiteConfiguration.PostRoutes.First();
+                var routes = metadatos.PostRoutes.Any() ? metadatos.PostRoutes : rawSiteConfiguration.PostRoutes;
+                var mainRoute = routes.First();
                 (string _, string canonicalPath) = this.GetPostPaths(mainRoute, metadatos);
                 metadatos.CanonicalUrl = canonicalPath;
 
@@ -123,7 +124,8 @@
                     var (_, canonicalTag) = this.GetPaths(this.siteConfiguration.TagIndexRoute, tag);
                 }
 
-                foreach (string pathTemplate in rawSiteConfiguration.PostRoutes)
+                var routes = metadatos.PostRoutes.Any() ? metadatos.PostRoutes : rawSiteConfiguration.PostRoutes;
+                foreach (string pathTemplate in routes)
                 {
                     (string filePath, string _) = this.GetPostPaths(pathTemplate, metadatos);
                     this.WriteFile(this.fileSystem.Path.Combine(outputPath, filePath), renderedPost);

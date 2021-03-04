@@ -38,9 +38,10 @@
             }
             else
             {
-                if (this.fileSystem.File.Exists(cleanTemplateName))
+                var templatePath = this.fileSystem.Path.Combine(this.rootPath, "templates", cleanTemplateName);
+                if (this.fileSystem.File.Exists(templatePath))
                 {
-                    finalPath = cleanTemplateName;
+                    finalPath = templatePath;
                 }
             }
 

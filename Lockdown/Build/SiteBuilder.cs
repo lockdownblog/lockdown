@@ -14,6 +14,10 @@
 
     public class SiteBuilder : ISiteBuilder
     {
+        private const string IndexFileName = "index.liquid";
+        private const string TagIndexFileName = "tag_index.liquid";
+        private const string TagPageFileName = "tag_page.liquid";
+
         private readonly IFileSystem fileSystem;
         private readonly IYamlParser yamlParser;
         private readonly IMarkdownRenderer markdownRenderer;
@@ -135,7 +139,7 @@
 
         public virtual void WriteTagIndex(string inputPath, string outputPath, IEnumerable<Link> tagPosts)
         {
-            var fileText = this.fileSystem.File.ReadAllText(this.fileSystem.Path.Combine(inputPath, "templates", "_tag_index.liquid"));
+            var fileText = this.fileSystem.File.ReadAllText(this.fileSystem.Path.Combine(inputPath, "templates", TagIndexFileName));
 
             var (tagOutputPath, _) = this.GetPaths(this.siteConfiguration.TagIndexRoute, null);
             var renderVars = new
@@ -149,9 +153,9 @@
 
         public virtual void WriteTags(string inputPath, string outputPath, TagCollection tagCollection)
         {
+            var fileText = this.fileSystem.File.ReadAllText(this.fileSystem.Path.Combine(inputPath, "templates", TagPageFileName));
             foreach (var (key, tagGroup) in tagCollection)
             {
-                var fileText = this.fileSystem.File.ReadAllText(this.fileSystem.Path.Combine(inputPath, "templates", "_tag_page.liquid"));
                 var renderVars = new
                 {
                     site = this.siteConfiguration,
@@ -172,7 +176,7 @@
             {
                 var paginator = this.CreatePaginator(splits, currentPage);
 
-                var fileText = this.fileSystem.File.ReadAllText(this.fileSystem.Path.Combine(rootPath, "templates", "_index.liquid"));
+                var fileText = this.fileSystem.File.ReadAllText(this.fileSystem.Path.Combine(rootPath, "templates", IndexFileName));
 
                 var renderVars = new
                 {

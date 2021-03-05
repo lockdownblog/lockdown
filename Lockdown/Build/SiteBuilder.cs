@@ -17,6 +17,7 @@
         private const string IndexFileName = "index.liquid";
         private const string TagIndexFileName = "tag_index.liquid";
         private const string TagPageFileName = "tag_page.liquid";
+        private const string DefaultPostLayout = "post";
 
         private readonly IFileSystem fileSystem;
         private readonly IYamlParser yamlParser;
@@ -229,9 +230,10 @@
 
         public virtual string RenderContent(PostMetadata metadata, string content, string inputPath)
         {
+            var layoutToExtend = string.IsNullOrEmpty(metadata.Layout) ? DefaultPostLayout : metadata.Layout;
             var contentWrapped = new string[]
             {
-                "{% extends post %}",
+                $"{{% extends {layoutToExtend} %}}",
                 "{% block post_content %}",
                 this.markdownRenderer.RenderMarkdown(content),
                 "{% endblock %}",

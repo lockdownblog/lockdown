@@ -1,9 +1,11 @@
 ﻿namespace Lockdown.Build.Entities
 {
+    using System;
     using System.Collections.Generic;
+    using System.Linq;
     using DotLiquid;
 
-    public class SiteConfiguration : Drop
+    public class SiteConfiguration : Drop, IEquatable<SiteConfiguration>
     {
         public string Title { get; set; }
 
@@ -19,10 +21,18 @@
 
         public List<Link> Social { get; set; }
 
-        public List<string> PostRoutes { get; set; }
+        public bool Equals(SiteConfiguration other)
+        {
+            var sameSocial = Enumerable.SequenceEqual(this.Social, other.Social);
 
-        public string TagIndexRoute { get; set; }
-
-        public string TagPageRoute { get; set; }
+            return other.Title == this.Title &&
+                other.Subtitle == this.Subtitle &&
+                other.Description == this.Description &&
+                other.SiteUrl == this.SiteUrl &&
+                other.DefaultAuthor == this.DefaultAuthor &&
+                other.PagesInTags == this.PagesInTags &&
+                sameSocial
+                ;
+        }
     }
 }

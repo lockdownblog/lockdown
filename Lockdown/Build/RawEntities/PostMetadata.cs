@@ -13,6 +13,9 @@
         [YamlMember(Alias = "slug")]
         public string Slug { get; set; }
 
+        [YamlMember(Alias = "layout")]
+        public string Layout { get; set; }
+
         [YamlMember(Alias = "date")]
         public DateTime? Date { get; set; }
 

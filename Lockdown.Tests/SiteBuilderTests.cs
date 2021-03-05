@@ -30,6 +30,7 @@
         private readonly Mock<IYamlParser> moqYamlParser;
         private readonly Mock<IMarkdownRenderer> moqMarkdownRenderer;
         private readonly Mock<ILiquidRenderer> moqLiquidRenderer;
+        private readonly IYamlConfigurationReader yamlConfigurationReader;
         private readonly SiteBuilder genericSiteBuilder;
 
         public SiteBuilderTests()
@@ -40,13 +41,14 @@
             this.moqLiquidRenderer = new Mock<ILiquidRenderer>();
             this.slugifier = new Slugifier();
             this.mapper = Build.Mapping.Mapper.GetMapper();
+            this.yamlConfigurationReader = new YamlConfigurationReader(
+                this.moqYamlParser.Object, this.mapper);
             this.genericSiteBuilder = new SiteBuilder(
                 this.fakeFileSystem,
-                this.moqYamlParser.Object,
                 this.moqMarkdownRenderer.Object,
                 this.moqLiquidRenderer.Object,
                 this.slugifier,
-                this.mapper);
+                this.yamlConfigurationReader);
         }
 
         [Fact]
@@ -101,11 +103,10 @@
             fakeFileSystem.Directory.CreateDirectory(Output);
             var siteBuilder = new SiteBuilder(
                 fakeFileSystem,
-                this.moqYamlParser.Object,
                 this.moqMarkdownRenderer.Object,
                 this.moqLiquidRenderer.Object,
                 this.slugifier,
-                this.mapper);
+                this.yamlConfigurationReader);
 
             // Act
             siteBuilder.CopyFiles(InputPath, Output);
@@ -145,11 +146,10 @@ tags: lockdown, Data Science, Some Other tag
 
             var siteBuilder = new SiteBuilder(
                 this.fakeFileSystem,
-                new YamlParser(),
                 this.moqMarkdownRenderer.Object,
                 this.moqLiquidRenderer.Object,
                 this.slugifier,
-                this.mapper);
+                new YamlConfigurationReader(new YamlParser(), this.mapper));
 
             // Act
             var actualMetadata = siteBuilder.ConvertMetadata(metadata);
@@ -201,7 +201,6 @@ tags: lockdown, Data Science, Some Other tag
         [Fact]
         public async Task TestRenderContent()
         {
-            // Setup: Prepare our test by copying our `demo` folder into our "fake" file system.
             var workspace = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "../../../../"));
             var templatePath = Path.Combine(workspace, "Lockdown", "BlankTemplate", "templates");
             var dictionary = new Dictionary<string, MockFileData>();
@@ -213,18 +212,17 @@ tags: lockdown, Data Science, Some Other tag
 
             var fakeFileSystem = new MockFileSystem(dictionary);
 
-            var metadata = new PostMetadata { Title = "Test post", Date = new DateTime(2000, 1, 1) };
+            var metadata = new PostMetadata { Title = "Test post", Date = new DateTime(2000, 1, 1), Layout = "post" };
             var postContent = "# Content #";
             var dotLiquidRenderer = new DotLiquidRenderer(fakeFileSystem);
             dotLiquidRenderer.SetRoot(InputPath);
             this.moqMarkdownRenderer.Setup(moq => moq.RenderMarkdown("# Content #")).Returns(() => "<b>Content</b>");
             var siteBuilder = new SiteBuilder(
                 fakeFileSystem,
-                this.moqYamlParser.Object,
                 this.moqMarkdownRenderer.Object,
                 dotLiquidRenderer,
                 this.slugifier,
-                this.mapper);
+                this.yamlConfigurationReader);
 
             // Act
             var convertedPost = siteBuilder.RenderContent(metadata, postContent, InputPath);

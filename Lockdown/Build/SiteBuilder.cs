@@ -6,7 +6,6 @@
     using System.IO.Abstractions;
     using System.Linq;
     using System.Text;
-    using AutoMapper;
     using Lockdown.Build.Entities;
     using Lockdown.Build.Markdown;
     using Lockdown.Build.Utils;
@@ -14,33 +13,26 @@
 
     public class SiteBuilder : ISiteBuilder
     {
-        private const string IndexFileName = "index.liquid";
-        private const string TagIndexFileName = "tag_index.liquid";
-        private const string TagPageFileName = "tag_page.liquid";
-        private const string DefaultPostLayout = "post";
-
         private readonly IFileSystem fileSystem;
-        private readonly IYamlParser yamlParser;
         private readonly IMarkdownRenderer markdownRenderer;
         private readonly ILiquidRenderer liquidRenderer;
         private readonly ISlugifier slugifier;
-        private readonly IMapper mapper;
+        private readonly IYamlConfigurationReader yamlConfigurationReader;
         private SiteConfiguration siteConfiguration;
+        private Raw.SiteConfiguration rawSiteConfiguration;
 
         public SiteBuilder(
             IFileSystem fileSystem,
-            IYamlParser yamlParser,
             IMarkdownRenderer markdownRenderer,
             ILiquidRenderer liquidRenderer,
             ISlugifier slugifier,
-            IMapper mapper)
+            IYamlConfigurationReader yamlConfigurationReader)
         {
             this.fileSystem = fileSystem;
-            this.yamlParser = yamlParser;
             this.markdownRenderer = markdownRenderer;
             this.liquidRenderer = liquidRenderer;
             this.slugifier = slugifier;
-            this.mapper = mapper;
+            this.yamlConfigurationReader = yamlConfigurationReader;
             this.siteConfiguration = null;
         }
 
@@ -61,8 +53,7 @@
             this.CopyFiles(staticPath, outputPath);
             this.liquidRenderer.SetRoot(inputPath);
 
-            var rawSiteConfiguration = this.ReadSiteConfiguration(inputPath);
-            this.siteConfiguration = this.mapper.Map<SiteConfiguration>(rawSiteConfiguration);
+            (this.rawSiteConfiguration, this.siteConfiguration) = this.ReadSiteConfiguration(inputPath);
 
             var postMetadata = new List<(PostMetadata metadata, string content)>();
 
@@ -75,7 +66,7 @@
                 var (rawMetadata, rawContent) = this.SplitPost(rawPost);
                 var metadatos = this.ConvertMetadata(rawMetadata);
 
-                var routes = metadatos.PostRoutes.Any() ? metadatos.PostRoutes : rawSiteConfiguration.PostRoutes;
+                var routes = metadatos.PostRoutes.Any() ? metadatos.PostRoutes : this.rawSiteConfiguration.RouteConfiguration?.PostRoutes;
                 var mainRoute = routes.First();
                 (string _, string canonicalPath) = this.GetPostPaths(mainRoute, metadatos);
                 metadatos.CanonicalUrl = canonicalPath;
@@ -84,7 +75,7 @@
                 {
                     if (!tagCollection.ContainsKey(tag))
                     {
-                        var (tagOutputPath, canonicalUrl) = this.GetPaths(this.siteConfiguration.TagPageRoute, tag);
+                        var (tagOutputPath, canonicalUrl) = this.GetPaths(this.rawSiteConfiguration.RouteConfiguration.TagPageRoute, tag);
                         tagCollection[tag] = new TagGroup(link: new Link { Url = canonicalUrl, Text = tag }, slug: tagOutputPath);
                     }
 
@@ -100,7 +91,7 @@
 
             this.WriteTagIndex(inputPath, outputPath, tagCollection.Values.Select(tag => tag.Link));
 
-            this.WritePosts(inputPath, outputPath, rawSiteConfiguration, postMetadata);
+            this.WritePosts(inputPath, outputPath, postMetadata);
 
             this.WriteIndex(postMetadata.Select(element => element.metadata), tagCollection, inputPath, outputPath);
         }
@@ -118,7 +109,7 @@
             return list;
         }
 
-        public virtual void WritePosts(string inputPath, string outputPath, Raw.SiteConfiguration rawSiteConfiguration, List<(PostMetadata metadata, string content)> postMetadata)
+        public virtual void WritePosts(string inputPath, string outputPath, List<(PostMetadata metadata, string content)> postMetadata)
         {
             foreach (var (metadatos, content) in postMetadata)
             {
@@ -126,10 +117,10 @@
 
                 foreach (var tag in metadatos.TagArray)
                 {
-                    var (_, canonicalTag) = this.GetPaths(this.siteConfiguration.TagIndexRoute, tag);
+                    var (_, canonicalTag) = this.GetPaths(this.rawSiteConfiguration.RouteConfiguration.TagIndexRoute, tag);
                 }
 
-                var routes = metadatos.PostRoutes.Any() ? metadatos.PostRoutes : rawSiteConfiguration.PostRoutes;
+                var routes = metadatos.PostRoutes.Any() ? metadatos.PostRoutes : this.rawSiteConfiguration.RouteConfiguration.PostRoutes;
                 foreach (string pathTemplate in routes)
                 {
                     (string filePath, string _) = this.GetPostPaths(pathTemplate, metadatos);
@@ -140,9 +131,9 @@
 
         public virtual void WriteTagIndex(string inputPath, string outputPath, IEnumerable<Link> tagPosts)
         {
-            var fileText = this.fileSystem.File.ReadAllText(this.fileSystem.Path.Combine(inputPath, "templates", TagIndexFileName));
+            var fileText = this.fileSystem.File.ReadAllText(this.fileSystem.Path.Combine(inputPath, "templates", this.rawSiteConfiguration.TemplateConfiguration.TagIndexTemplate));
 
-            var (tagOutputPath, _) = this.GetPaths(this.siteConfiguration.TagIndexRoute, null);
+            var (tagOutputPath, _) = this.GetPaths(this.rawSiteConfiguration?.RouteConfiguration.TagIndexRoute, null);
             var renderVars = new
             {
                 site = this.siteConfiguration,
@@ -154,7 +145,7 @@
 
         public virtual void WriteTags(string inputPath, string outputPath, TagCollection tagCollection)
         {
-            var fileText = this.fileSystem.File.ReadAllText(this.fileSystem.Path.Combine(inputPath, "templates", TagPageFileName));
+            var fileText = this.fileSystem.File.ReadAllText(this.fileSystem.Path.Combine(inputPath, "templates", this.rawSiteConfiguration.TemplateConfiguration.TagPageTemplate));
             foreach (var (key, tagGroup) in tagCollection)
             {
                 var renderVars = new
@@ -177,7 +168,7 @@
             {
                 var paginator = this.CreatePaginator(splits, currentPage);
 
-                var fileText = this.fileSystem.File.ReadAllText(this.fileSystem.Path.Combine(rootPath, "templates", IndexFileName));
+                var fileText = this.fileSystem.File.ReadAllText(this.fileSystem.Path.Combine(rootPath, "templates", this.rawSiteConfiguration.TemplateConfiguration.IndexTemplate));
 
                 var renderVars = new
                 {
@@ -230,7 +221,7 @@
 
         public virtual string RenderContent(PostMetadata metadata, string content, string inputPath)
         {
-            var layoutToExtend = string.IsNullOrEmpty(metadata.Layout) ? DefaultPostLayout : metadata.Layout;
+            var layoutToExtend = string.IsNullOrEmpty(metadata.Layout) ? this.rawSiteConfiguration.TemplateConfiguration.PostTemplate : metadata.Layout;
             var contentWrapped = new string[]
             {
                 $"{{% extends {layoutToExtend} %}}",
@@ -252,8 +243,7 @@
 
         public virtual PostMetadata ConvertMetadata(string metadata)
         {
-            var rawMetadata = this.yamlParser.ParseExtras<Raw.PostMetadata>(metadata);
-            var trueMetadata = this.mapper.Map<PostMetadata>(rawMetadata);
+            var (rawMetadata, trueMetadata) = this.yamlConfigurationReader.LoadPostMetadata(metadata);
 
             trueMetadata.Slug = this.slugifier.VerifySlug(trueMetadata.Slug) ? trueMetadata.Slug : this.slugifier.Slugify(trueMetadata.Title);
             trueMetadata.TagArray = trueMetadata.TagArray.Select(nonNormTag => this.slugifier.Slugify(nonNormTag)).ToArray();
@@ -335,17 +325,12 @@
             return (filePath, $"/{canonicalPath}");
         }
 
-        private Raw.SiteConfiguration ReadSiteConfiguration(string inputPath)
+        private (Raw.SiteConfiguration, SiteConfiguration) ReadSiteConfiguration(string inputPath)
         {
             var source = this.fileSystem.Path.Combine(inputPath, "site.yml");
             var text = this.fileSystem.File.ReadAllText(source);
 
-            var siteConf = this.yamlParser.Parse<Raw.SiteConfiguration>(text);
-
-            // Set defaults
-            siteConf.PostRoutes = siteConf.PostRoutes ?? new List<string> { "post/{}.html" };
-
-            return siteConf;
+            return this.yamlConfigurationReader.LoadSiteConfiguration(text);
         }
 
         private void CopyFiles(IDirectoryInfo source, IDirectoryInfo target)

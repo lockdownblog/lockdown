@@ -21,6 +21,7 @@
         {
             ServiceProvider services = new ServiceCollection()
                 .AddSingleton<IMapper>(Build.Mapping.Mapper.GetMapper())
+                .AddSingleton<IYamlConfigurationReader, YamlConfigurationReader>()
                 .AddSingleton<ILiquidRenderer, DotLiquidRenderer>()
                 .AddSingleton<ISlugifier, Slugifier>()
                 .AddSingleton<IMarkdownRenderer, MarkdownRenderer>()

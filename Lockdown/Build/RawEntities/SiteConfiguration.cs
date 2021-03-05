@@ -1,9 +1,11 @@
 ﻿namespace Lockdown.Build.RawEntities
 {
+    using System;
     using System.Collections.Generic;
+    using System.Linq;
     using YamlDotNet.Serialization;
 
-    public class SiteConfiguration
+    public class SiteConfiguration : IEquatable<SiteConfiguration>
     {
         [YamlMember(Alias = "title")]
         public string Title { get; set; }
@@ -26,13 +28,34 @@
         [YamlMember(Alias = "social")]
         public List<Link> Social { get; set; }
 
-        [YamlMember(Alias = "post-routes")]
-        public List<string> PostRoutes { get; set; }
+        [YamlMember(Alias = "templates")]
+        public TemplateConfiguration TemplateConfiguration { get; set; }
 
-        [YamlMember(Alias = "tag-index-route")]
-        public string TagIndexRoute { get; set; }
+        [YamlMember(Alias = "routes")]
+        public RouteConfiguration RouteConfiguration { get; set; }
 
-        [YamlMember(Alias = "tag-page-route")]
-        public string TagPageRoute { get; set; }
+        public bool Equals(SiteConfiguration other)
+        {
+            var sameTemplateConfiguration = (other.TemplateConfiguration is null &&
+                this.TemplateConfiguration is null) ||
+                (other.TemplateConfiguration?.Equals(this.TemplateConfiguration) ?? false);
+
+            var sameRouteConfiguration = (other.RouteConfiguration is null &&
+                this.RouteConfiguration is null) ||
+                (other.RouteConfiguration?.Equals(this.RouteConfiguration) ?? false);
+
+            var sameSocial = Enumerable.SequenceEqual(this.Social, other.Social);
+
+            return other.Title == this.Title &&
+                other.Subtitle == this.Subtitle &&
+                other.Description == this.Description &&
+                other.SiteUrl == this.SiteUrl &&
+                other.DefaultAuthor == this.DefaultAuthor &&
+                other.PagesInTags == this.PagesInTags &&
+                sameSocial &&
+                sameTemplateConfiguration &&
+                sameRouteConfiguration
+                ;
+        }
     }
 }

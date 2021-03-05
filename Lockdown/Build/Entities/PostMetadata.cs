@@ -10,6 +10,8 @@
 
         public string Slug { get; set; }
 
+        public string Layout { get; set; }
+
         public DateTime? Date { get; set; }
 
         public string Summary { get; set; }

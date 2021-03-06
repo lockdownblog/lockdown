@@ -2,9 +2,8 @@
 {
     using System;
     using System.Collections.Generic;
-    using DotLiquid;
 
-    public class PostMetadata : Drop
+    public class PostMetadata : EntityExtras
     {
         public string Title { get; set; }
 

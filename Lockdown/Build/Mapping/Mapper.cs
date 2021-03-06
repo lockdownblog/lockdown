@@ -24,7 +24,10 @@
                         dest => dest.Date,
                         opt => opt.MapFrom(
                             orig => orig.Date.GetValueOrDefault(
-                                orig.Date.GetValueOrDefault(DateTime.Now))));
+                                orig.Date.GetValueOrDefault(DateTime.Now))))
+                    .ForMember(
+                        dest => dest.Extras,
+                        opt => opt.ConvertUsing(new DynamicDictionaryConverter()));
 
                 cfg.CreateMap<Raw.SiteConfiguration, SiteConfiguration>()
                     .ForMember(dest => dest.Context, opt => opt.Ignore());

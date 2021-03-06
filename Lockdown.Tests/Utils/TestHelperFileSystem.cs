@@ -11,9 +11,7 @@
 
     public class TestHelperFileSystem
     {
-
         private const string InputPath = "./input";
-        private const string Output = "./output";
 
         private readonly IFileSystem fakeFileSystem;
 

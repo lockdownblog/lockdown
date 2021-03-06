@@ -174,7 +174,6 @@ templates:
             };
 
             yield return new object[] { yamlString3, rawConfiguration, configuration };
-
         }
 
         [Theory]

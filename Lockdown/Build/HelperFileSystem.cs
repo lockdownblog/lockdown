@@ -50,10 +50,10 @@
 
         public string ReadTemplateFile(Context context, string templateName)
         {
-            templateName = this.FindFile(templateName);
             if (!this.cache.ContainsKey(templateName))
             {
-                this.cache[templateName] = this.fileSystem.File.ReadAllText(templateName);
+                var convertedTemplateName = this.FindFile(templateName);
+                this.cache[templateName] = this.fileSystem.File.ReadAllText(convertedTemplateName);
             }
 
             return this.cache[templateName];

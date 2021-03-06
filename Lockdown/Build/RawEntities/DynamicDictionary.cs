@@ -12,6 +12,8 @@
             this.dictionary = dictionary;
         }
 
+        public Dictionary<string, string> Dictionary => this.dictionary;
+
         public override bool TryGetMember(
             GetMemberBinder binder, out object result)
         {

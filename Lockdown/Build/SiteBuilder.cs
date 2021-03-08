@@ -18,8 +18,6 @@
         private readonly ILiquidRenderer liquidRenderer;
         private readonly ISlugifier slugifier;
         private readonly IYamlConfigurationReader yamlConfigurationReader;
-        private SiteConfiguration siteConfiguration;
-        private Raw.SiteConfiguration rawSiteConfiguration;
 
         public SiteBuilder(
             IFileSystem fileSystem,
@@ -33,7 +31,27 @@
             this.liquidRenderer = liquidRenderer;
             this.slugifier = slugifier;
             this.yamlConfigurationReader = yamlConfigurationReader;
-            this.siteConfiguration = null;
+            this.SiteConfiguration = null;
+            this.RawSiteConfiguration = null;
+            this.TagCollection = new TagCollection();
+        }
+
+        public virtual Raw.SiteConfiguration RawSiteConfiguration
+        {
+            get;
+            private set;
+        }
+
+        public virtual SiteConfiguration SiteConfiguration
+        {
+            get;
+            private set;
+        }
+
+        public virtual TagCollection TagCollection
+        {
+            get;
+            private set;
         }
 
         public virtual void CleanFolder(string folder)
@@ -53,11 +71,9 @@
             this.CopyFiles(staticPath, outputPath);
             this.liquidRenderer.SetRoot(inputPath);
 
-            (this.rawSiteConfiguration, this.siteConfiguration) = this.ReadSiteConfiguration(inputPath);
+            (this.RawSiteConfiguration, this.SiteConfiguration) = this.ReadSiteConfiguration(inputPath);
 
             var postMetadata = new List<(PostMetadata metadata, string content)>();
-
-            var tagCollection = new TagCollection();
 
             var rawPosts = this.GetPosts(inputPath).ToList();
 
@@ -66,34 +82,34 @@
                 var (rawMetadata, rawContent) = this.SplitPost(rawPost);
                 var metadatos = this.ConvertMetadata(rawMetadata);
 
-                var routes = metadatos.PostRoutes.Any() ? metadatos.PostRoutes : this.rawSiteConfiguration.RouteConfiguration?.PostRoutes;
+                var routes = metadatos.PostRoutes.Any() ? metadatos.PostRoutes : this.RawSiteConfiguration.RouteConfiguration?.PostRoutes;
                 var mainRoute = routes.First();
                 (string _, string canonicalPath) = this.GetPostPaths(mainRoute, metadatos);
                 metadatos.CanonicalUrl = canonicalPath;
 
                 foreach (var tag in metadatos.TagArray)
                 {
-                    if (!tagCollection.ContainsKey(tag))
+                    if (!this.TagCollection.ContainsKey(tag))
                     {
-                        var (tagOutputPath, canonicalUrl) = this.GetPaths(this.rawSiteConfiguration.RouteConfiguration.TagPageRoute, tag);
-                        tagCollection[tag] = new TagGroup(link: new Link { Url = canonicalUrl, Text = tag }, slug: tagOutputPath);
+                        var (tagOutputPath, canonicalUrl) = this.GetPaths(this.RawSiteConfiguration.RouteConfiguration.TagPageRoute, tag);
+                        this.TagCollection[tag] = new TagGroup(link: new Link { Url = canonicalUrl, Text = tag }, slug: tagOutputPath);
                     }
 
-                    tagCollection[tag].Add(metadatos);
+                    this.TagCollection[tag].Add(metadatos);
                 }
 
-                metadatos.Tags = metadatos.TagArray.Select(tag => tagCollection[tag].Link).ToArray();
+                metadatos.Tags = metadatos.TagArray.Select(tag => this.TagCollection[tag].Link).ToArray();
 
                 postMetadata.Add((metadatos, rawContent));
             }
 
-            this.WriteTags(inputPath, outputPath, tagCollection);
+            this.WriteTags(inputPath, outputPath, this.TagCollection);
 
-            this.WriteTagIndex(inputPath, outputPath, tagCollection.Values.Select(tag => tag.Link));
+            this.WriteTagIndex(inputPath, outputPath, this.TagCollection);
 
             this.WritePosts(inputPath, outputPath, postMetadata);
 
-            this.WriteIndex(postMetadata.Select(element => element.metadata), tagCollection, inputPath, outputPath);
+            this.WriteIndex(postMetadata.Select(element => element.metadata), this.TagCollection, inputPath, outputPath);
         }
 
         public virtual List<List<T>> SplitChunks<T>(List<T> values, int size = 30)
@@ -117,10 +133,10 @@
 
                 foreach (var tag in metadatos.TagArray)
                 {
-                    var (_, canonicalTag) = this.GetPaths(this.rawSiteConfiguration.RouteConfiguration.TagIndexRoute, tag);
+                    var (_, canonicalTag) = this.GetPaths(this.RawSiteConfiguration.RouteConfiguration.TagIndexRoute, tag);
                 }
 
-                var routes = metadatos.PostRoutes.Any() ? metadatos.PostRoutes : this.rawSiteConfiguration.RouteConfiguration.PostRoutes;
+                var routes = metadatos.PostRoutes.Any() ? metadatos.PostRoutes : this.RawSiteConfiguration.RouteConfiguration.PostRoutes;
                 foreach (string pathTemplate in routes)
                 {
                     (string filePath, string _) = this.GetPostPaths(pathTemplate, metadatos);
@@ -129,15 +145,16 @@
             }
         }
 
-        public virtual void WriteTagIndex(string inputPath, string outputPath, IEnumerable<Link> tagPosts)
+        public virtual void WriteTagIndex(string inputPath, string outputPath, TagCollection tagCollection)
         {
-            var fileText = this.fileSystem.File.ReadAllText(this.fileSystem.Path.Combine(inputPath, "templates", this.rawSiteConfiguration.TemplateConfiguration.TagIndexTemplate));
+            var fileText = this.fileSystem.File.ReadAllText(this.fileSystem.Path.Combine(inputPath, "templates", this.RawSiteConfiguration.TemplateConfiguration.TagIndexTemplate));
 
-            var (tagOutputPath, _) = this.GetPaths(this.rawSiteConfiguration?.RouteConfiguration.TagIndexRoute, null);
+            var (tagOutputPath, _) = this.GetPaths(this.RawSiteConfiguration?.RouteConfiguration.TagIndexRoute, null);
             var renderVars = new
             {
-                site = this.siteConfiguration,
-                tags = tagPosts,
+                site = this.SiteConfiguration,
+                tagCollection = tagCollection,
+                tags = tagCollection.Values.Select(tag => tag.Link),
             };
             var renderedContent = this.liquidRenderer.Render(fileText, renderVars);
             this.WriteFile(this.fileSystem.Path.Combine(outputPath, tagOutputPath), renderedContent);
@@ -145,12 +162,12 @@
 
         public virtual void WriteTags(string inputPath, string outputPath, TagCollection tagCollection)
         {
-            var fileText = this.fileSystem.File.ReadAllText(this.fileSystem.Path.Combine(inputPath, "templates", this.rawSiteConfiguration.TemplateConfiguration.TagPageTemplate));
+            var fileText = this.fileSystem.File.ReadAllText(this.fileSystem.Path.Combine(inputPath, "templates", this.RawSiteConfiguration.TemplateConfiguration.TagPageTemplate));
             foreach (var (key, tagGroup) in tagCollection)
             {
                 var renderVars = new
                 {
-                    site = this.siteConfiguration,
+                    site = this.SiteConfiguration,
                     articles = tagGroup,
                     tag_name = key,
                 };
@@ -168,11 +185,11 @@
             {
                 var paginator = this.CreatePaginator(splits, currentPage);
 
-                var fileText = this.fileSystem.File.ReadAllText(this.fileSystem.Path.Combine(rootPath, "templates", this.rawSiteConfiguration.TemplateConfiguration.IndexTemplate));
+                var fileText = this.fileSystem.File.ReadAllText(this.fileSystem.Path.Combine(rootPath, "templates", this.RawSiteConfiguration.TemplateConfiguration.IndexTemplate));
 
                 var renderVars = new
                 {
-                    site = this.siteConfiguration,
+                    site = this.SiteConfiguration,
                     tags = tagCollection.Values,
                     paginator = paginator,
                     posts = orderedPosts,
@@ -221,7 +238,7 @@
 
         public virtual string RenderContent(PostMetadata metadata, string content, string inputPath)
         {
-            var layoutToExtend = string.IsNullOrEmpty(metadata.Layout) ? this.rawSiteConfiguration.TemplateConfiguration.PostTemplate : metadata.Layout;
+            var layoutToExtend = string.IsNullOrEmpty(metadata.Layout) ? this.RawSiteConfiguration.TemplateConfiguration.PostTemplate : metadata.Layout;
             var contentWrapped = new string[]
             {
                 $"{{% extends {layoutToExtend} %}}",
@@ -233,7 +250,7 @@
             var postVariables = new
             {
                 post = metadata,
-                site = this.siteConfiguration,
+                site = this.SiteConfiguration,
             };
 
             var renderedContent = this.liquidRenderer.Render(string.Join('\n', contentWrapped), postVariables);

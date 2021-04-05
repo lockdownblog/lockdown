@@ -10,22 +10,16 @@
 
         public MarkdownRenderer()
         {
-            this.pipeline = new MarkdownPipelineBuilder().UseAdvancedExtensions().Build();
+            this.pipeline = new MarkdownPipelineBuilder()
+                .UseAdvancedExtensions()
+                .UsePipeTables()
+                .UseMathematics()
+                .Build();
         }
 
         public string RenderMarkdown(string text)
         {
-            var document = Markdown.Parse(text, this.pipeline);
-
-            using var writer = new StringWriter();
-            var htmlRenderer = new HtmlRenderer(writer);
-
-            foreach (var documentPart in document)
-            {
-                htmlRenderer.Write(documentPart);
-            }
-
-            return writer.ToString();
+            return Markdig.Markdown.ToHtml(text, this.pipeline);
         }
     }
 }
